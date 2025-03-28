@@ -49,11 +49,14 @@ class FieldValidationScope<R>(
         return RuleBuilder(rule, this)
     }
 
-    fun <T> FieldValidationScope<T?>.ruleIfNotNull(
-        message: String,
-        predicate: (T) -> Boolean
-    ): RuleBuilder<T?> {
-        return rule(message) { it == null || predicate(it) }
+    fun <T> FieldValidationScope<T?>.whenNotNull(
+        block: FieldValidationScope<T>.() -> Unit
+    ) {
+        nestedValidators += { parentNullable ->
+            if (parentNullable != null) {
+                FieldValidationScope<T>(path) { parentNullable }.apply(block).evaluate()
+            } else emptyList()
+        }
     }
 
     fun <E> validate(

@@ -176,24 +176,31 @@ class ValidatorTest {
     }
 
     @Test
-    fun `optional field passes when null and fails when invalid`() {
+    fun `nullable field required and validated when present`() {
         data class User(val nickname: String?)
 
         val validator = validator {
             validate(User::nickname) {
-                ruleIfNotNull("Nickname must be at least 3 characters") {
-                    it.length >= 3
+                rule("Nickname must not be null") { it != null }
+
+                whenNotNull{
+                    rule("Nickname must be at least 3 characters") { it.length >= 3 }
+                    rule("Nickname must only contain letters") { it.all { c -> c.isLetter() } }
                 }
             }
         }
 
-        val nullResult = validator.validate(User(nickname = null))
-        assertEquals(true, nullResult.isValid)
+        val result = validator.validate(User(nickname = "ab"))
+        assertEquals(1, result.errors.size)
+        assertEquals("nickname", result.errors[0].path)
+        assertEquals("Nickname must be at least 3 characters", result.errors[0].message)
 
-        val shortResult = validator.validate(User(nickname = "ab"))
-        assertEquals(false, shortResult.isValid)
-        assertEquals("nickname", shortResult.errors[0].path)
-        assertEquals("Nickname must be at least 3 characters", shortResult.errors[0].message)
+        val invalidCharResult = validator.validate(User(nickname = "abc123"))
+        assertEquals(1, invalidCharResult.errors.size)
+        assertEquals("Nickname must only contain letters", invalidCharResult.errors[0].message)
+
+        val validResult = validator.validate(User(nickname = "Abigail"))
+        assertEquals(true, validResult.isValid)
     }
 
 }
