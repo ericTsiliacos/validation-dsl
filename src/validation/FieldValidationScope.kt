@@ -55,15 +55,24 @@ class FieldValidationScope<R>(
         return ruleErrors + nestedErrors
     }
 
-    private fun evaluateNodes(value: R, nodes: List<ValidationNode.Rule<R>>): List<ValidationError> {
+    private fun evaluateNodes(value: R, rootNodes: List<ValidationNode.Rule<R>>): List<ValidationError> {
         val errors = mutableListOf<ValidationError>()
-        for (node in nodes) {
-            if (!node.predicate(value)) {
+        val stack = ArrayDeque<Pair<ValidationNode.Rule<R>, Boolean>>()
+
+        rootNodes.forEach { stack.addLast(it to true) }
+
+        while (stack.isNotEmpty()) {
+            val (node, parentPassed) = stack.removeLast()
+
+            if (!parentPassed || !node.predicate(value)) {
                 errors += ValidationError(path, node.message)
             } else {
-                errors += evaluateNodes(value, node.children)
+                node.children.forEach { child ->
+                    stack.addLast(child to true)
+                }
             }
         }
+
         return errors
     }
 
