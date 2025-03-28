@@ -3,6 +3,7 @@ import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
 
 class ValidatorTest {
+    data class User(val name: String?, val email: String = "")
 
     @Test
     fun `name must not be blank`() {
@@ -104,30 +105,6 @@ class ValidatorTest {
     }
 
     @Test
-    fun `validate each item in a list field`() {
-        data class Tag(val value: String)
-        data class User(val tags: List<Tag>)
-
-        val validator = validator {
-            validateEach(User::tags) {
-                validate(Tag::value) {
-                    rule("Tag value must not be blank") { it.isNotBlank() }
-                }
-            }
-        }
-
-        val result = validator.validate(User(tags = listOf(Tag(""), Tag("hello"), Tag(" "))))
-
-        assertEquals(2, result.errors.size)
-
-        assertEquals("tags[0].value", result.errors[0].path)
-        assertEquals("Tag value must not be blank", result.errors[0].message)
-
-        assertEquals("tags[2].value", result.errors[1].path)
-        assertEquals("Tag value must not be blank", result.errors[1].message)
-    }
-
-    @Test
     fun `validate nested object field`() {
         data class Address(val city: String?)
         data class User(val address: Address)
@@ -145,6 +122,57 @@ class ValidatorTest {
         assertEquals(1, result.errors.size)
         assertEquals("address.city", result.errors[0].path)
         assertEquals("City must not be null", result.errors[0].message)
+    }
+
+    @Test
+    fun `validateEach inside nested validate works`() {
+        data class Child(val value: String)
+        data class Parent(val children: List<Child>)
+
+        val validator = validator {
+            validateEach(Parent::children) {
+                validate(Child::value) {
+                    rule("Value must not be blank") { it.isNotBlank() }
+                }
+            }
+        }
+
+        val result = validator.validate(Parent(children = listOf(
+            Child(""),
+            Child("ok"),
+            Child(" ")
+        )))
+
+        assertEquals(2, result.errors.size)
+        assertEquals("children[0].value", result.errors[0].path)
+        assertEquals("children[2].value", result.errors[1].path)
+    }
+
+    @Test
+    fun `validateEach inside nested object field`() {
+        data class Child(val value: String)
+        data class Container(val children: List<Child>)
+        data class Parent(val container: Container)
+
+        val validator = validator {
+            validate(Parent::container) {
+                validateEach(Container::children) {
+                    validate(Child::value) {
+                        rule("Value must not be blank") { it.isNotBlank() }
+                    }
+                }
+            }
+        }
+
+        val result = validator.validate(
+            Parent(container = Container(
+                children = listOf(Child(""), Child("ok"), Child(" "))
+            ))
+        )
+
+        assertEquals(2, result.errors.size)
+        assertEquals("container.children[0].value", result.errors[0].path)
+        assertEquals("container.children[2].value", result.errors[1].path)
     }
 
 }

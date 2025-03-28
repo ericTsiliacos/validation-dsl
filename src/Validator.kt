@@ -1,9 +1,5 @@
-package dsl.validation
-
 import kotlin.reflect.KProperty1
-import kotlinx.coroutines.*
 
-// --- Core Types ---
 data class ValidationError(val path: String, val message: String)
 
 class ValidationResult(val errors: List<ValidationError>) {
@@ -27,6 +23,17 @@ class RuleBuilder<R>(
         node.children += child
         return RuleBuilder(child, scope)
     }
+}
+
+private fun <T> validateEachList(
+    list: List<T>,
+    path: String,
+    block: FieldValidationScope<T>.() -> Unit
+): List<ValidationError> {
+    return list.asSequence().flatMapIndexed { index, item ->
+        val itemPath = "$path[$index]"
+        FieldValidationScope(itemPath) { item }.apply(block).evaluate()
+    }.toList()
 }
 
 class FieldValidationScope<R>(
@@ -55,27 +62,12 @@ class FieldValidationScope<R>(
 
     fun <E> validateEach(
         prop: KProperty1<R, List<E>>,
-        parallel: Boolean = false,
         block: FieldValidationScope<E>.() -> Unit
     ) {
         val listPath = combinePath(path, prop.name)
         nestedValidators += { parent ->
             val list = prop.get(parent)
-            if (parallel) {
-                runBlocking {
-                    list.mapIndexed { index, item ->
-                        async(Dispatchers.Default) {
-                            val indexedPath = "$listPath[$index]"
-                            FieldValidationScope(indexedPath) { item }.apply(block).evaluate()
-                        }
-                    }.flatMap { it.await() }
-                }
-            } else {
-                list.asSequence().flatMapIndexed { index, item ->
-                    val indexedPath = "$listPath[$index]"
-                    FieldValidationScope(indexedPath) { item }.apply(block).evaluate()
-                }.toList()
-            }
+            validateEachList(list, listPath, block)
         }
     }
 
@@ -118,27 +110,12 @@ class Validator<T> {
 
     fun <R> validateEach(
         prop: KProperty1<T, List<R>>,
-        parallel: Boolean = false,
         block: FieldValidationScope<R>.() -> Unit
     ) {
         val path = prop.name
         rules += { target ->
             val list = prop.get(target)
-            if (parallel) {
-                runBlocking {
-                    list.mapIndexed { index, item ->
-                        async(Dispatchers.Default) {
-                            val itemPath = "$path[$index]"
-                            FieldValidationScope(itemPath) { item }.apply(block).evaluate()
-                        }
-                    }.flatMap { it.await() }
-                }
-            } else {
-                list.asSequence().flatMapIndexed { index, item ->
-                    val itemPath = "$path[$index]"
-                    FieldValidationScope(itemPath) { item }.apply(block).evaluate()
-                }.toList()
-            }
+            validateEachList(list, path, block)
         }
     }
 
