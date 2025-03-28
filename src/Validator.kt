@@ -49,6 +49,13 @@ class FieldValidationScope<R>(
         return RuleBuilder(rule, this)
     }
 
+    fun <T> FieldValidationScope<T?>.ruleIfNotNull(
+        message: String,
+        predicate: (T) -> Boolean
+    ): RuleBuilder<T?> {
+        return rule(message) { it == null || predicate(it) }
+    }
+
     fun <E> validate(
         prop: KProperty1<R, E>,
         block: FieldValidationScope<E>.() -> Unit

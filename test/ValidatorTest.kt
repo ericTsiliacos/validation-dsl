@@ -175,4 +175,25 @@ class ValidatorTest {
         assertEquals("container.children[2].value", result.errors[1].path)
     }
 
+    @Test
+    fun `optional field passes when null and fails when invalid`() {
+        data class User(val nickname: String?)
+
+        val validator = validator {
+            validate(User::nickname) {
+                ruleIfNotNull("Nickname must be at least 3 characters") {
+                    it.length >= 3
+                }
+            }
+        }
+
+        val nullResult = validator.validate(User(nickname = null))
+        assertEquals(true, nullResult.isValid)
+
+        val shortResult = validator.validate(User(nickname = "ab"))
+        assertEquals(false, shortResult.isValid)
+        assertEquals("nickname", shortResult.errors[0].path)
+        assertEquals("Nickname must be at least 3 characters", shortResult.errors[0].message)
+    }
+
 }
