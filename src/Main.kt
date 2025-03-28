@@ -1,3 +1,5 @@
+import validation.validator
+
 fun main() {
     data class Tag(val value: String)
     data class User(val tags: List<Tag>)
