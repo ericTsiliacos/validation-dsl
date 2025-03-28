@@ -3,7 +3,7 @@ package validation
 import validation.RuleBuilder.ValidationNode
 import kotlin.reflect.KProperty1
 
-class ValidationScope<R>(
+class FieldValidationScope<R>(
     private val path: String,
     private val getter: () -> R
 ) {
@@ -16,30 +16,30 @@ class ValidationScope<R>(
         return RuleBuilder(rule, this)
     }
 
-    fun <T> ValidationScope<T?>.whenNotNull(
-        block: ValidationScope<T>.() -> Unit
+    fun <T> FieldValidationScope<T?>.whenNotNull(
+        block: FieldValidationScope<T>.() -> Unit
     ) {
         nestedValidators += { parentNullable ->
             if (parentNullable != null) {
-                ValidationScope<T>(path) { parentNullable }.apply(block).evaluate()
+                FieldValidationScope<T>(path) { parentNullable }.apply(block).evaluate()
             } else emptyList()
         }
     }
 
     fun <E> validate(
         prop: KProperty1<R, E>,
-        block: ValidationScope<E>.() -> Unit
+        block: FieldValidationScope<E>.() -> Unit
     ) {
         val subPath = combinePath(path, prop.name)
         nestedValidators += { parent ->
             val value = prop.get(parent)
-            ValidationScope(subPath) { value }.apply(block).evaluate()
+            FieldValidationScope(subPath) { value }.apply(block).evaluate()
         }
     }
 
     fun <E> validateEach(
         prop: KProperty1<R, List<E>>,
-        block: ValidationScope<E>.() -> Unit
+        block: FieldValidationScope<E>.() -> Unit
     ) {
         val listPath = combinePath(path, prop.name)
         nestedValidators += { parent ->

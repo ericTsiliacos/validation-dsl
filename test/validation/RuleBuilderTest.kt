@@ -17,7 +17,7 @@ class ValidationRuleTest {
     @Test
     fun `RuleBuilder can chain with andThen`() {
         val root = RuleBuilder.ValidationNode.Rule<String>("not null", { true })
-        val scope = ValidationScope("dummy") { "value" }
+        val scope = FieldValidationScope("dummy") { "value" }
 
         val builder = RuleBuilder(root, scope)
         builder.andThen("must be lowercase") { it == it.lowercase() }

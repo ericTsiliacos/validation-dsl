@@ -3,13 +3,13 @@ package validation
 import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 
-class ValidationScopeTest {
+class FieldValidationScopeTest {
     data class Profile(val name: String?, val tags: List<Tag>)
     data class Tag(val value: String)
 
     @Test
     fun `rule evaluates and reports errors`() {
-        val scope = ValidationScope("name") { Profile(null, emptyList()) }
+        val scope = FieldValidationScope("name") { Profile(null, emptyList()) }
         scope.rule("Name must not be null") { it.name != null }
 
         val errors = scope.evaluate()
@@ -20,7 +20,7 @@ class ValidationScopeTest {
 
     @Test
     fun `validate runs nested field validator`() {
-        val scope = ValidationScope("profile") { Profile("", emptyList()) }
+        val scope = FieldValidationScope("profile") { Profile("", emptyList()) }
         scope.validate(Profile::name) {
             rule("must not be blank") { !it.isNullOrBlank() }
         }
@@ -31,7 +31,7 @@ class ValidationScopeTest {
 
     @Test
     fun `validateEach runs validation for list items`() {
-        val scope = ValidationScope("profile") {
+        val scope = FieldValidationScope("profile") {
             Profile("ok", listOf(Tag(""), Tag("ok"), Tag(" ")))
         }
 
@@ -72,7 +72,7 @@ class ValidationScopeTest {
 
     @Test
     fun `andThen builds dependent rule chain`() {
-        val scope = ValidationScope("age") { "18" }
+        val scope = FieldValidationScope("age") { "18" }
 
         scope.rule("must be numeric") { it.all { c -> c.isDigit() } }
             .andThen("must be at least 18") { it.toInt() >= 18 }

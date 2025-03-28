@@ -7,18 +7,18 @@ class Validator<T> {
 
     fun <R> validate(
         prop: KProperty1<T, R>,
-        block: ValidationScope<R>.() -> Unit
+        block: FieldValidationScope<R>.() -> Unit
     ) {
         val path = prop.name
         rules += { target ->
             val value = prop.get(target)
-            ValidationScope(path) { value }.apply(block).evaluate()
+            FieldValidationScope(path) { value }.apply(block).evaluate()
         }
     }
 
     fun <R> validateEach(
         prop: KProperty1<T, List<R>>,
-        block: ValidationScope<R>.() -> Unit
+        block: FieldValidationScope<R>.() -> Unit
     ) {
         val path = prop.name
         rules += { target ->

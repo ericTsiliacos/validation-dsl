@@ -2,7 +2,7 @@ package validation
 
 class RuleBuilder<R>(
     private val node: ValidationNode.Rule<R>,
-    private val scope: ValidationScope<R>
+    private val scope: FieldValidationScope<R>
 ) {
 
     sealed class ValidationNode<R> {
