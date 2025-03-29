@@ -1,7 +1,9 @@
 package validation
 
-import org.testng.AssertJUnit.*
+import org.testng.AssertJUnit.assertEquals
+import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
+import validation.RuleBuilder.ValidationNode.PredicateRule
 
 class FieldValidationScopeTest {
     data class Profile(val name: String?, val tags: List<Tag>)
@@ -16,6 +18,20 @@ class FieldValidationScopeTest {
         assertEquals(1, errors.size)
         assertEquals("name", errors[0].path)
         assertEquals("Name must not be null", errors[0].message)
+    }
+
+    @Test
+    fun `rule accepts PredicateRule and validates correctly`() {
+        val notBlank = PredicateRule<String>("must not be blank") { it.isNotBlank() }
+
+        val scope = FieldValidationScope("username") { "" }
+        scope.rule(notBlank)
+
+        val errors = scope.evaluate()
+
+        assertEquals(1, errors.size)
+        assertEquals("username", errors[0].path)
+        assertEquals("must not be blank", errors[0].message)
     }
 
     @Test

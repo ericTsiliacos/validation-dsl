@@ -11,6 +11,12 @@ class RuleBuilder<R>(
             val predicate: (R) -> Boolean,
             val children: MutableList<Rule<R>> = mutableListOf()
         ) : ValidationNode<R>()
+
+        data class PredicateRule<R>(
+            val message: String,
+            val predicate: (R) -> Boolean
+        )
+
     }
 
     fun andThen(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {

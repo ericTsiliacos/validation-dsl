@@ -1,6 +1,7 @@
 package validation
 
 import validation.RuleBuilder.ValidationNode
+import validation.RuleBuilder.ValidationNode.PredicateRule
 import kotlin.reflect.KProperty1
 
 class FieldValidationScope<R>(
@@ -15,6 +16,8 @@ class FieldValidationScope<R>(
         rootRules += rule
         return RuleBuilder(rule, this)
     }
+
+    fun rule(rule: PredicateRule<R>): RuleBuilder<R> = rule(rule.message, rule.predicate)
 
     fun <T> FieldValidationScope<T?>.whenNotNull(
         block: FieldValidationScope<T>.() -> Unit
