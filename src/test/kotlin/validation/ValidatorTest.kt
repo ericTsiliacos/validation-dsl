@@ -1,9 +1,7 @@
 package validation
 
 import org.testng.AssertJUnit.assertEquals
-import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
-import validation.validator
 
 class ValidatorTest {
 

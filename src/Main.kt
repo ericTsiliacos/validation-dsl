@@ -1,4 +1,4 @@
-import validation.validator
+import main.kotlin.validation.validator
 
 fun main() {
     data class Tag(val value: String)

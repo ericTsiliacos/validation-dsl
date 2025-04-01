@@ -4,9 +4,11 @@ internal fun <T> validateEachList(
     list: List<T>,
     path: String,
     block: FieldValidationScope<T>.() -> Unit
-): List<ValidationError> {
-    return list.asSequence().flatMapIndexed { index, item ->
+): Validated<Unit> {
+    val results = list.mapIndexed { index, item ->
         val itemPath = "$path[$index]"
         FieldValidationScope(itemPath) { item }.apply(block).evaluate()
-    }.toList()
+    }
+    return combineResults(*results.toTypedArray()).map { }
 }
+

@@ -11,12 +11,14 @@ class ValidateEachUtilTest {
     fun `validateEachList applies block to each item with indexed path`() {
         val items = listOf(Item(""), Item("ok"), Item(" "))
 
-        val errors = validateEachList(items, "tags") {
+        val result = validateEachList(items, "tags") {
             rule("must not be blank") { it.value.isNotBlank() }
         }
 
-        assertEquals(2, errors.size)
+        assertTrue(result is Validated.Invalid)
+        val errors = (result as Validated.Invalid).errors
 
+        assertEquals(2, errors.size)
         assertEquals("tags[0]", errors[0].path)
         assertEquals("must not be blank", errors[0].message)
 
