@@ -3,11 +3,15 @@ package validation
 import kotlin.reflect.KProperty1
 
 class FieldValidationScope<R>(
-    private val path: String,
-    private val getter: () -> R
+    internal val path: String,
+    internal val getter: () -> R
 ) {
     private val rules = mutableListOf<Rule<R>>()
-    private val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
+    internal val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
+
+    fun <T : Any> FieldValidationScope<T?>.whenNotNull(block: FieldValidationScope<T>.() -> Unit) {
+        nested += whenNotNull(this, block)
+    }
 
     fun rule(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
         val rule = Rules.fromPredicate(path, message, predicate)
@@ -17,20 +21,6 @@ class FieldValidationScope<R>(
 
     fun rule(rule: Rule<R>) {
         rules += rule
-    }
-
-    private fun <T : Any> whenNotNull(
-        parentScope: FieldValidationScope<T?>,
-        block: FieldValidationScope<T>.() -> Unit
-    ): () -> Validated<Unit> {
-        return {
-            val value = parentScope.getter()
-            if (value != null) {
-                FieldValidationScope(parentScope.path) { value }.apply(block).evaluate()
-            } else {
-                Validated.Valid(Unit)
-            }
-        }
     }
 
     fun <E> validate(
@@ -70,11 +60,34 @@ class FieldValidationScope<R>(
         return combineResults(*allResults.toTypedArray()).map { Unit }
     }
 
-    fun <T : Any> FieldValidationScope<T?>.whenNotNull(block: FieldValidationScope<T>.() -> Unit) {
-        nested += whenNotNull(this, block)
-    }
-
     private fun combinePath(parent: String, child: String): String =
         if (parent.isEmpty()) child else "$parent.$child"
 
+    private fun <T : Any> whenNotNull(
+        parentScope: FieldValidationScope<T?>,
+        block: FieldValidationScope<T>.() -> Unit
+    ): () -> Validated<Unit> {
+        return {
+            val value = parentScope.getter()
+            if (value != null) {
+                FieldValidationScope(parentScope.path) { value }.apply(block).evaluate()
+            } else {
+                Validated.Valid(Unit)
+            }
+        }
+    }
+
+}
+
+fun <T> FieldValidationScope<List<T>>.validateEachItem(
+    block: FieldValidationScope<T>.() -> Unit
+) {
+    this.nested += {
+        val parentList = this.getter()
+        val results = parentList.mapIndexed { index, item ->
+            val itemPath = "${this.path}[$index]"
+            FieldValidationScope(itemPath) { item }.apply(block).evaluate()
+        }
+        combineResults(*results.toTypedArray()).map { }
+    }
 }

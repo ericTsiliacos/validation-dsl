@@ -109,4 +109,28 @@ class FieldValidationScopeTest {
         assertTrue(result is Validated.Valid)
     }
 
+    @Test
+    fun `validateEach applies block to each item with indexed path`() {
+        data class Item(val value: String)
+
+        val items = listOf(Item(""), Item("ok"), Item(" "))
+
+        val scope = FieldValidationScope("tags") { items }
+        scope.validateEachItem {
+            rule("must not be blank") { it.value.isNotBlank() }
+        }
+
+        val result = scope.evaluate()
+
+        assertTrue(result is Validated.Invalid)
+        val errors = (result as Validated.Invalid).errors
+
+        assertEquals(2, errors.size)
+        assertEquals("tags[0]", errors[0].path)
+        assertEquals("must not be blank", errors[0].message)
+
+        assertEquals("tags[2]", errors[1].path)
+        assertEquals("must not be blank", errors[1].message)
+    }
+
 }
