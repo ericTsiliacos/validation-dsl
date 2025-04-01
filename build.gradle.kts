@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.22"
     `maven-publish`
+    jacoco
 }
 
 java {
@@ -21,8 +22,23 @@ dependencies {
     testImplementation("org.testng:testng:7.7.0")
 }
 
+jacoco {
+    toolVersion = "0.8.11"
+}
+
 tasks.test {
     useTestNG()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
 }
 
 publishing {

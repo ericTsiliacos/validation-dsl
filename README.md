@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/ericTsiliacos/validation-dsl/branch/main/graph/badge.svg)](https://codecov.io/gh/ericTsiliacos/validation-dsl)
+
 # validation-dsl
 
 A principled, functional Kotlin validation DSL built by [@ericTsiliacos](https://github.com/ericTsiliacos).  
