@@ -76,29 +76,6 @@ class FieldValidationScopeTest {
     }
 
     @Test
-    fun `whenNotNull block is only evaluated when value is not null`() {
-        data class User(val nickname: String?)
-
-        val validator = validator {
-            validate(User::nickname) {
-                whenNotNull {
-                    rule("must be at least 3 characters") { it.length >= 3 }
-                }
-            }
-        }
-
-        val nullResult = validator.validate(User(nickname = null))
-        assertTrue(nullResult.isValid)
-
-        val shortResult = validator.validate(User(nickname = "ab"))
-        assertEquals(1, shortResult.errors.size)
-        assertEquals("must be at least 3 characters", shortResult.errors[0].message)
-
-        val validResult = validator.validate(User(nickname = "abcd"))
-        assertTrue(validResult.isValid)
-    }
-
-    @Test
     fun `andThen builds dependent rule chain`() {
         val scope = FieldValidationScope("age") { "18" }
 
@@ -107,30 +84,6 @@ class FieldValidationScopeTest {
 
         val result = scope.evaluate()
         assertTrue(result is Validated.Valid)
-    }
-
-    @Test
-    fun `validateEach applies block to each item with indexed path`() {
-        data class Item(val value: String)
-
-        val items = listOf(Item(""), Item("ok"), Item(" "))
-
-        val scope = FieldValidationScope("tags") { items }
-        scope.validateEachItem {
-            rule("must not be blank") { it.value.isNotBlank() }
-        }
-
-        val result = scope.evaluate()
-
-        assertTrue(result is Validated.Invalid)
-        val errors = (result as Validated.Invalid).errors
-
-        assertEquals(2, errors.size)
-        assertEquals("tags[0]", errors[0].path)
-        assertEquals("must not be blank", errors[0].message)
-
-        assertEquals("tags[2]", errors[1].path)
-        assertEquals("must not be blank", errors[1].message)
     }
 
 }

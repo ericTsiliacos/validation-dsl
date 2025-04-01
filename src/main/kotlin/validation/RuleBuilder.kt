@@ -2,6 +2,7 @@ package validation
 
 import validation.Rules.andThen
 
+@ValidationDsl
 class RuleBuilder<R>(
     private var rule: Rule<R>
 ) {
@@ -15,4 +16,3 @@ class RuleBuilder<R>(
     fun build(): Rule<R> = rule
 
 }
-

@@ -2,6 +2,7 @@ package validation
 
 import kotlin.reflect.KProperty1
 
+@ValidationDsl
 class Validator<T> {
     private val validations = mutableListOf<(T) -> Validated<Unit>>()
 
@@ -35,6 +36,3 @@ class Validator<T> {
         return ValidationResult.fromMany(results)
     }
 }
-
-fun <T> validator(block: Validator<T>.() -> Unit): Validator<T> =
-    Validator<T>().apply(block)

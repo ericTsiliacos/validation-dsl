@@ -63,4 +63,14 @@ class RuleTest {
         assertEquals("must be lowercase", errors[1].message)
     }
 
+    @Test
+    fun `build returns composed rule`() {
+        val builder = RuleBuilder(Rules.fromPredicate<String>("x", "must be number") { it.all(Char::isDigit) })
+            .andThen("must be 3 chars") { it.length == 3 }
+
+        val built = builder.build()
+        val result = built("123")
+        assertTrue(result.isValid())
+    }
+
 }
