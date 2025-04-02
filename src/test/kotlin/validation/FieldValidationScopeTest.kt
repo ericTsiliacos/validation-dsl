@@ -83,5 +83,36 @@ class FieldValidationScopeTest {
         }
     }
 
+    @Test
+    fun `group accumulates nested rule errors`() {
+        val result = fieldScope("field", "") {
+            group("basic rules") {
+                rule("must not be blank") { it.isNotBlank() }
+                rule("must be lowercase") { it == it.lowercase() }
+            }
+        }
 
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be blank")
+        }
+    }
+
+    @Test
+    fun `group can wrap nested field validations`() {
+        val profile = Profile("bob", listOf(Tag(""), Tag("ok")))
+        val result = fieldScope("profile", profile) {
+            group("tag validation") {
+                validateEach(Profile::tags) {
+                    validate(Tag::value) {
+                        rule("must not be blank") { it.isNotBlank() }
+                    }
+                }
+            }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("profile.tags[0].value", "must not be blank")
+        }
+    }
+    
 }

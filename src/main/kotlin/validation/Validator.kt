@@ -27,12 +27,10 @@ class Validator<T> {
                     val path = "${prop.name}[$index]"
                     FieldValidationScope(path, { item }).apply(block).evaluate()
                 }.toTypedArray()
-            ).map { Unit }
+            ).map { }
         }
     }
 
-    fun validate(target: T): ValidationResult {
-        val results = validations.map { it(target) }
-        return ValidationResult.fromMany(results)
-    }
+    fun validate(target: T): ValidationResult = validations.map { it(target) }
+        .let(ValidationResult.Companion::fromMany)
 }

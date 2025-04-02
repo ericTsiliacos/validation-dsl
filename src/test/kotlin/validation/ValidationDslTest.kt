@@ -5,6 +5,8 @@ import org.testng.annotations.Test
 class ValidationDslTest {
 
     data class User(val name: String?, val tags: List<String>)
+    data class Address(val street: String, val city: String)
+    data class Customer(val address: Address)
 
     @Test
     fun `validator builds and runs validation`() {
@@ -139,7 +141,7 @@ class ValidationDslTest {
         data class Item(val tags: List<String>)
         data class Order(val items: List<Item>)
 
-        val validator = validator<Order> {
+        val validator = validator {
             validateEach(Order::items) {
                 validateEach(Item::tags) {
                     rule("must not be blank") { it.isNotBlank() }
@@ -231,6 +233,75 @@ class ValidationDslTest {
         }
 
         result.assertValid()
+    }
+
+    @Test
+    fun `group errors include label in metadata`() {
+        val validator = validator {
+            validate(User::name) {
+                group("name group") {
+                    rule("must not be blank") { !it.isNullOrBlank() }
+                    rule("must be longer than 3") { it != null && it.length > 3 }
+                }
+            }
+        }
+
+        val result = validator.validate(User("", listOf()))
+
+        result.assertInvalid { errors ->
+            val groups = errors.map { it.group }
+            assert(groups.contains("name group"))
+            assert(groups.count { it == "name group" } == 2)
+        }
+    }
+
+    @Test
+    fun `group in DSL validator accumulates rule errors`() {
+        val validator = validator {
+            validate(User::name) {
+                group("name checks") {
+                    rule("must not be null") { it != null }
+                    rule("must be longer than 2 characters") { it != null && it.length > 2 }
+                }
+            }
+        }
+
+        val result = validator.validate(User(null, listOf()))
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("name", "must not be null")
+        }
+    }
+
+    @Test
+    fun `group in DSL validator wraps nested validations`() {
+        val validator = validator {
+            validate(Customer::address) {
+                group("address rules") {
+                    validate(Address::street) {
+                        rule("must not be blank") { it.isNotBlank() }
+                    }
+                    validate(Address::city) {
+                        rule("must not be blank") { it.isNotBlank() }
+                    }
+                }
+            }
+        }
+
+        val result = validator.validate(Customer(Address("", "")))
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches(
+                path = "address.street",
+                message = "must not be blank",
+                group = "address rules",
+            )
+            errors[1].assertMatches(
+                path = "address.city",
+                message = "must not be blank",
+                group = "address rules",
+            )
+        }
     }
 
 }

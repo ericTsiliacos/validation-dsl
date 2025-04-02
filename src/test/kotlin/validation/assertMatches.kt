@@ -2,10 +2,16 @@ package validation
 
 import org.testng.AssertJUnit.*
 
-fun ValidationError.assertMatches(path: String, message: String, code: String? = null) {
-    assertEquals(path, this.path)
-    assertEquals(message, this.message)
-    assertEquals(code, this.code)
+fun ValidationError.assertMatches(
+    path: String,
+    message: String,
+    code: String? = null,
+    group: String? = null
+) {
+    assertEquals(this.path, path)
+    assertEquals(this.message, message)
+    if (code != null) assertEquals(this.code, code)
+    if (group != null) assertEquals(this.group, group)
 }
 
 inline fun <T> Validated<T>.assertInvalid(block: (List<ValidationError>) -> Unit) {
