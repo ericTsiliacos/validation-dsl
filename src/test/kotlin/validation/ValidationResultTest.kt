@@ -3,7 +3,7 @@ package validation
 import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 
-class ValidationErrorTest {
+class ValidationResultTest {
 
     @Test
     fun `ValidationResult isValid returns true when no errors`() {
@@ -55,5 +55,18 @@ class ValidationErrorTest {
         assertFalse(result.isValid)
         assertEquals(listOf(e1, e2), result.errors)
     }
+
+    @Test
+    fun `ValidationError code is null by default`() {
+        val error = ValidationError("email", "must not be blank")
+        assertNull(error.code)
+    }
+
+    @Test
+    fun `ValidationError stores code when provided`() {
+        val error = ValidationError("email", "must not be blank", code = "email.blank")
+        assertEquals("email.blank", error.code)
+    }
+
 
 }

@@ -8,7 +8,7 @@ class RuleBuilder<R>(
 ) {
 
     fun andThen(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
-        val chained = Rules.fromPredicate("", message, predicate)
+        val chained = Rules.fromPredicate(path = "", message = message, predicate = predicate)
         rule = rule andThen chained
         return this
     }

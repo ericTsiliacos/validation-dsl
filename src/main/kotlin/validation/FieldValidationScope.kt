@@ -11,7 +11,7 @@ class FieldValidationScope<R>(
     internal val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
 
     fun rule(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
-        val rule = Rules.fromPredicate(path, message, predicate)
+        val rule = Rules.fromPredicate(path = path, message = message, predicate = predicate)
         rules += rule
         return RuleBuilder(rule)
     }
@@ -42,7 +42,7 @@ class FieldValidationScope<R>(
                 val itemPath = "$listPath[$index]"
                 FieldValidationScope(itemPath) { item }.apply(block).evaluate()
             }
-            combineResults(*results.toTypedArray()).map { Unit }
+            combineResults(*results.toTypedArray()).map { }
         }
     }
 
@@ -53,7 +53,7 @@ class FieldValidationScope<R>(
         val nestedResults = nested.map { it() }
 
         val allResults = ruleResults + nestedResults
-        return combineResults(*allResults.toTypedArray()).map { Unit }
+        return combineResults(*allResults.toTypedArray()).map { }
     }
 
     private fun combinePath(parent: String, child: String): String =

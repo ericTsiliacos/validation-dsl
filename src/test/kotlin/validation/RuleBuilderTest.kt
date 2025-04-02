@@ -4,12 +4,13 @@ import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 import validation.Rules.andThen
 import validation.Rules.combine
+import validation.Rules.fromPredicate
 
-class RuleTest {
+class RuleBuilderTest {
 
     @Test
     fun `rule from predicate passes and fails correctly`() {
-        val rule: Rule<String> = Rules.fromPredicate("username", "must not be blank") {
+        val rule: Rule<String> = fromPredicate("username", "must not be blank") {
             it.isNotBlank()
         }
 
@@ -25,8 +26,8 @@ class RuleTest {
 
     @Test
     fun `andThen chains dependent rules and short-circuits on failure`() {
-        val rule1 = Rules.fromPredicate<String>("age", "must be numeric") { it.all { c -> c.isDigit() } }
-        val rule2 = Rules.fromPredicate<String>("age", "must be >= 18") { it.toInt() >= 18 }
+        val rule1 = fromPredicate<String>("age", "must be numeric") { it.all { c -> c.isDigit() } }
+        val rule2 = fromPredicate<String>("age", "must be >= 18") { it.toInt() >= 18 }
         val chained = rule1 andThen rule2
 
         val valid = chained("21")
@@ -45,10 +46,10 @@ class RuleTest {
 
     @Test
     fun `combine applies both rules and accumulates errors`() {
-        val r1 = Rules.fromPredicate<String>("username", "must be longer than 3") {
+        val r1 = fromPredicate<String>("username", "must be longer than 3") {
             it.length > 3
         }
-        val r2 = Rules.fromPredicate<String>("username", "must be lowercase") {
+        val r2 = fromPredicate<String>("username", "must be lowercase") {
             it == it.lowercase()
         }
 
@@ -65,7 +66,7 @@ class RuleTest {
 
     @Test
     fun `build returns composed rule`() {
-        val builder = RuleBuilder(Rules.fromPredicate<String>("x", "must be number") { it.all(Char::isDigit) })
+        val builder = RuleBuilder(fromPredicate<String>("x", "must be number") { it.all(Char::isDigit) })
             .andThen("must be 3 chars") { it.length == 3 }
 
         val built = builder.build()

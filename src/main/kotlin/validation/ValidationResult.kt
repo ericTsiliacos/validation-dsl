@@ -1,6 +1,10 @@
 package validation
 
-data class ValidationError(val path: String, val message: String)
+data class ValidationError(
+    val path: String,
+    val message: String,
+    val code: String? = null,
+)
 
 class ValidationResult(val errors: List<ValidationError>) {
 
@@ -12,10 +16,11 @@ class ValidationResult(val errors: List<ValidationError>) {
             is Validated.Invalid -> ValidationResult(validated.errors)
         }
 
-        fun fromMany(validatedList: List<Validated<Unit>>): ValidationResult {
-            val allErrors = validatedList.filterIsInstance<Validated.Invalid>().flatMap { it.errors }
-            return ValidationResult(allErrors)
-        }
+        fun fromMany(validatedList: List<Validated<Unit>>): ValidationResult =
+            validatedList
+                .filterIsInstance<Validated.Invalid>()
+                .flatMap { it.errors }
+                .let(::ValidationResult)
     }
 
 }
