@@ -1,9 +1,6 @@
 package validation
 
 import org.testng.annotations.Test
-import validation.Rules.andThen
-import validation.Rules.combine
-import validation.Rules.fromPredicate
 
 class RuleBuilderTest {
 

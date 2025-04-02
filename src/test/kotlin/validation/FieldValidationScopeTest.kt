@@ -20,7 +20,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `rule accepts Rule and validates correctly`() {
-        val notBlank = Rules.fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
+        val notBlank = fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
 
         val result = fieldScope("username", "") {
             rule(notBlank)
@@ -114,5 +114,5 @@ class FieldValidationScopeTest {
             errors[0].assertMatches("profile.tags[0].value", "must not be blank")
         }
     }
-    
+
 }

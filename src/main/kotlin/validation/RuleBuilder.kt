@@ -1,6 +1,6 @@
 package validation
 
-import validation.Rules.andThen
+typealias Rule<T> = (T) -> Validated<Unit>
 
 @ValidationDsl
 class RuleBuilder<R>(
@@ -8,7 +8,7 @@ class RuleBuilder<R>(
 ) {
 
     fun andThen(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
-        val chained = Rules.fromPredicate(path = "", message = message, predicate = predicate)
+        val chained = fromPredicate(path = "", message = message, predicate = predicate)
         rule = rule andThen chained
         return this
     }

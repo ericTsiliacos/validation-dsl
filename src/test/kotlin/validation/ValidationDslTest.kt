@@ -1,5 +1,6 @@
 package validation
 
+import org.testng.AssertJUnit.assertEquals
 import org.testng.annotations.Test
 
 class ValidationDslTest {
@@ -301,6 +302,126 @@ class ValidationDslTest {
                 message = "must not be blank",
                 group = "address rules",
             )
+        }
+    }
+
+    @Test
+    fun `andThen short-circuits if first rule fails`() {
+        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+
+        val combined = rule1 andThen rule2
+
+        combined("").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must not be empty")
+        }
+    }
+
+    @Test
+    fun `andThen runs second rule only if first passes`() {
+        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+
+        val combined = rule1 andThen rule2
+
+        combined("Hello").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must be lowercase")
+        }
+    }
+
+    @Test
+    fun `combine accumulates both errors`() {
+        val rule1 = fromPredicate<String>("x", "must be longer than 3") { it.length > 3 }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+
+        val combined = rule1 combine rule2
+
+        combined("Hello").assertInvalid { errors ->
+            assertEquals(1, errors.size)
+            errors[0].assertMatches("x", "must be lowercase")
+        }
+
+        combined("A").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must be longer than 3")
+            errors[1].assertMatches("x", "must be lowercase")
+        }
+    }
+
+    @Test
+    fun `fromPredicate returns Valid when predicate passes`() {
+        val rule = fromPredicate<String>("field", "must not be blank") { it.isNotBlank() }
+        rule("abc").assertValid()
+    }
+
+    @Test
+    fun `fromPredicate returns Invalid when predicate fails`() {
+        val rule = fromPredicate<String>("field", "must not be blank") { it.isNotBlank() }
+        rule("").assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be blank")
+        }
+    }
+
+    @Test
+    fun `fromPredicate includes code when provided`() {
+        val rule = fromPredicate<String>(
+            path = "field",
+            message = "must not be blank",
+            code = "error.blank"
+        ) { it.isNotBlank() }
+
+        rule("").assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be blank", code = "error.blank")
+        }
+    }
+
+    @Test
+    fun `fromFunction returns valid when rule succeeds`() {
+        val rule = fromFunction<String> {
+            Validated.Valid(Unit)
+        }
+        rule("any input").assertValid()
+    }
+
+    @Test
+    fun `fromFunction handles null safely if rule allows`() {
+        val rule = fromFunction<String?> {
+            if (it == null) Validated.Invalid(listOf(ValidationError("field", "must not be null")))
+            else Validated.Valid(Unit)
+        }
+
+        rule(null).assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be null")
+        }
+    }
+
+    @Test
+    fun `fromFunction supports reusable rule objects`() {
+        val reusableRule: Rule<String> = {
+            if (it.startsWith("a")) Validated.Valid(Unit)
+            else Validated.Invalid(listOf(ValidationError("value", "must start with 'a'")))
+        }
+
+        val rule1 = fromFunction(reusableRule)
+        val rule2 = fromFunction(reusableRule)
+
+        rule1("abc").assertValid()
+        rule2("xyz").assertInvalid { errors ->
+            errors[0].assertMatches("value", "must start with 'a'")
+        }
+    }
+
+    @Test
+    fun `fromFunction wraps raw rule correctly`() {
+        val rawRule: Rule<String> = { input ->
+            if (input.length > 3) Validated.Valid(Unit)
+            else Validated.Invalid(listOf(ValidationError("field", "too short")))
+        }
+
+        val rule = fromFunction(rawRule)
+
+        rule("okay").assertValid()
+        rule("no").assertInvalid { errors ->
+            errors[0].assertMatches("field", "too short")
         }
     }
 
