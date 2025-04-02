@@ -65,6 +65,73 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `validateEachItem handles empty list as valid`() {
+        val result = fieldScope("tags", emptyList<String>()) {
+            validateEachItem {
+                rule("must not be blank") { it.isNotBlank() }
+            }
+        }
+
+        result.assertValid()
+    }
+
+    @Test
+    fun `multiple rules for same field accumulate errors`() {
+        val result = fieldScope("username", "") {
+            rule("must not be blank") { it.isNotBlank() }
+            rule("must be lowercase") { it == it.lowercase() }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("username", "must not be blank")
+            errors[1].assertMatches("username", "must be lowercase")
+        }
+    }
+
+    @Test
+    fun `nested validateEach handles deeply nested lists`() {
+        data class Item(val tags: List<String>)
+        data class Order(val items: List<Item>)
+
+        val validator = validator {
+            validateEach(Order::items) {
+                validateEach(Item::tags) {
+                    rule("must not be blank") { it.isNotBlank() }
+                }
+            }
+        }
+
+        val result = validator.validate(Order(listOf(
+            Item(listOf("ok", "")),
+            Item(listOf(" ", "ok"))
+        )))
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("items[0].tags[1]", "must not be blank")
+            errors[1].assertMatches("items[1].tags[0]", "must not be blank")
+        }
+    }
+
+    @Test
+    fun `ValidationResult fromMany handles empty list as valid`() {
+        val result = ValidationResult.fromMany(emptyList())
+        result.assertValid()
+    }
+
+    @Test
+    fun `ValidationError supports multiple codes for same path`() {
+        val result = Validated.Invalid(listOf(
+            ValidationError("field", "too short", code = "short"),
+            ValidationError("field", "must be lowercase", code = "lowercase")
+        ))
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("field", "too short", code = "short")
+            errors[1].assertMatches("field", "must be lowercase", code = "lowercase")
+        }
+    }
+
+    @Test
     fun `dependent rules short-circuit on first failure`() {
         val result = fieldScope("age", "abc") {
             dependent {
