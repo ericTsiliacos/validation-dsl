@@ -70,4 +70,18 @@ class FieldValidationScopeTest {
         result.assertValid()
     }
 
+    @Test
+    fun `FieldValidationScope should combine rules by default`() {
+        val result = fieldScope("field", "BAD") {
+            rule("must be lowercase") { it == it.lowercase() }
+            rule("must be longer than 5") { it.length > 5 }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("field", "must be lowercase")
+            errors[1].assertMatches("field", "must be longer than 5")
+        }
+    }
+
+
 }

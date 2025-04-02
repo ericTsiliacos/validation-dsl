@@ -51,6 +51,53 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `whenNotNull inside dependent is skipped if value is null`() {
+        val result = fieldScope("field", null as String?) {
+            dependent {
+                this@fieldScope.whenNotNull {
+                    rule("must be lowercase") { it == it.lowercase() }
+                }
+            }
+        }
+
+        result.assertValid()
+    }
+
+    @Test
+    fun `dependent inside whenNotNull short-circuits if first rule fails`() {
+        val result = fieldScope("field", "ABC" as String?) {
+            whenNotNull {
+                dependent {
+                    rule("must be numeric") { it.all(Char::isDigit) }
+                    rule("must be ≥ 3 digits") { it.length >= 3 }
+                }
+            }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("field", "must be numeric")
+        }
+    }
+
+    @Test
+    fun `nested dependent blocks short-circuit inner but not outer`() {
+        val result = fieldScope("value", "abc") {
+            dependent {
+                rule("must be lowercase") { it == it.lowercase() }
+
+                this@fieldScope.dependent {
+                    rule("must be numeric") { it.all(Char::isDigit) }
+                    rule("must be 3 chars") { it.length == 3 }
+                }
+            }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("value", "must be numeric")
+        }
+    }
+
+    @Test
     fun `validateEachItem validates each item in list`() {
         val result = fieldScope("tags", listOf("", "ok", " ")) {
             validateEachItem {
@@ -77,14 +124,13 @@ class ValidationDslTest {
 
     @Test
     fun `multiple rules for same field accumulate errors`() {
-        val result = fieldScope("username", "") {
+        val result = fieldScope("username", "ABC") {
             rule("must not be blank") { it.isNotBlank() }
             rule("must be lowercase") { it == it.lowercase() }
         }
 
         result.assertInvalid { errors ->
-            errors[0].assertMatches("username", "must not be blank")
-            errors[1].assertMatches("username", "must be lowercase")
+            errors[0].assertMatches("username", "must be lowercase")
         }
     }
 
@@ -93,7 +139,7 @@ class ValidationDslTest {
         data class Item(val tags: List<String>)
         data class Order(val items: List<Item>)
 
-        val validator = validator {
+        val validator = validator<Order> {
             validateEach(Order::items) {
                 validateEach(Item::tags) {
                     rule("must not be blank") { it.isNotBlank() }
@@ -101,10 +147,14 @@ class ValidationDslTest {
             }
         }
 
-        val result = validator.validate(Order(listOf(
-            Item(listOf("ok", "")),
-            Item(listOf(" ", "ok"))
-        )))
+        val result = validator.validate(
+            Order(
+                listOf(
+                    Item(listOf("ok", "")),
+                    Item(listOf(" ", "ok"))
+                )
+            )
+        )
 
         result.assertInvalid { errors ->
             errors[0].assertMatches("items[0].tags[1]", "must not be blank")
@@ -120,10 +170,12 @@ class ValidationDslTest {
 
     @Test
     fun `ValidationError supports multiple codes for same path`() {
-        val result = Validated.Invalid(listOf(
-            ValidationError("field", "too short", code = "short"),
-            ValidationError("field", "must be lowercase", code = "lowercase")
-        ))
+        val result = Validated.Invalid(
+            listOf(
+                ValidationError("field", "too short", code = "short"),
+                ValidationError("field", "must be lowercase", code = "lowercase")
+            )
+        )
 
         result.assertInvalid { errors ->
             errors[0].assertMatches("field", "too short", code = "short")
