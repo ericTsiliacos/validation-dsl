@@ -375,6 +375,43 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `predicate assigns path automatically when used in validation scope`() {
+        val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
+
+        val result = fieldScope("username", "") {
+            rule(notBlank)
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("username", "must not be blank")
+        }
+    }
+
+    @Test
+    fun `predicate passes validation when condition is met`() {
+        val atLeast3 = predicate<String>("must be at least 3 characters") { it.length >= 3 }
+
+        val result = fieldScope("name", "Bob") {
+            rule(atLeast3)
+        }
+
+        result.assertValid()
+    }
+
+    @Test
+    fun `predicate supports optional code`() {
+        val coded = predicate<String>("must be numeric", code = "numeric") { it.all(Char::isDigit) }
+
+        val result = fieldScope("age", "abc") {
+            rule(coded)
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("age", "must be numeric", code = "numeric")
+        }
+    }
+
+    @Test
     fun `fromFunction returns valid when rule succeeds`() {
         val rule = fromFunction<String> {
             Validated.Valid(Unit)

@@ -17,8 +17,17 @@ class FieldValidationScope<R>(
     }
 
     fun rule(rule: Rule<R>) {
-        rules += rule
+        val wrapped: Rule<R> = { value ->
+            val result = rule(value)
+            if (result is Validated.Invalid) {
+                Validated.Invalid(result.errors.map { err ->
+                    if (err.path.isBlank()) err.copy(path = path) else err
+                })
+            } else result
+        }
+        rules += wrapped
     }
+
 
     fun <E> validate(
         prop: KProperty1<R, E>,

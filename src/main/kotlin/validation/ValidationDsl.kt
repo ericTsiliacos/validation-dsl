@@ -172,6 +172,32 @@ fun <T> fromPredicate(
 }
 
 /**
+ * Defines a path-agnostic rule based on a predicate and error message.
+ *
+ * Unlike [fromPredicate], this function omits the need to specify a `path` up front.
+ * The surrounding validation scope will inject the correct path automatically.
+ *
+ * This is ideal for reusable or generic rules where the field path isn't known ahead of time.
+ *
+ * Example:
+ * ```kotlin
+ * val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
+ *
+ * validate(User::name) {
+ *     rule(notBlank) // 'name' path is injected automatically
+ * }
+ * ```
+ */
+fun <T> predicate(
+    message: String,
+    code: String? = null,
+    test: (T) -> Boolean
+): Rule<T> = { value ->
+    if (test(value)) Validated.Valid(Unit)
+    else Validated.Invalid(listOf(ValidationError("", message, code)))
+}
+
+/**
  * Wraps an existing rule function that returns a [Validated] result.
  *
  * Useful for composing or adapting low-level rule logic into the standard [Rule] type.
