@@ -20,8 +20,7 @@ class ValidationResultTest {
     @Test
     fun `ValidationError contains path and message`() {
         val error = ValidationError("name", "must not be blank")
-        assertEquals("name", error.path)
-        assertEquals("must not be blank", error.message)
+        error.assertMatches("name", "must not be blank")
     }
 
     @Test
@@ -65,8 +64,7 @@ class ValidationResultTest {
     @Test
     fun `ValidationError stores code when provided`() {
         val error = ValidationError("email", "must not be blank", code = "email.blank")
-        assertEquals("email.blank", error.code)
+        error.assertMatches("email", "must not be blank", code = "email.blank")
     }
-
 
 }

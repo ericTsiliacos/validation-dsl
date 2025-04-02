@@ -1,6 +1,5 @@
 package validation
 
-import org.testng.AssertJUnit.assertEquals
 import org.testng.annotations.Test
 
 class ValidatorTest {
@@ -15,9 +14,10 @@ class ValidatorTest {
             rule("must not be blank") { it.isNotBlank() }
         }
 
-        val result = validator.validate(User(name = "", tags = emptyList()))
-        assertEquals(1, result.errors.size)
-        assertEquals("name", result.errors[0].path)
+        val validated = validator.validate(User(name = "", tags = emptyList())).toValidated()
+        validated.assertInvalid { errors ->
+            errors[0].assertMatches("name", "must not be blank")
+        }
     }
 
     @Test
@@ -29,9 +29,10 @@ class ValidatorTest {
             }
         }
 
-        val result = validator.validate(User(name = "ok", tags = listOf(Tag(""), Tag("x"))))
-        assertEquals(1, result.errors.size)
-        assertEquals("tags[0].value", result.errors[0].path)
+        val validated = validator.validate(User(name = "ok", tags = listOf(Tag(""), Tag("x")))).toValidated()
+        validated.assertInvalid { errors ->
+            errors[0].assertMatches("tags[0].value", "must not be blank")
+        }
     }
 
     @Test
@@ -42,9 +43,10 @@ class ValidatorTest {
             }
         }
 
-        val result = validator.validate(User(name = "", tags = emptyList()))
-        assertEquals(1, result.errors.size)
-        assertEquals("name", result.errors[0].path)
+        val validated = validator.validate(User(name = "", tags = emptyList())).toValidated()
+        validated.assertInvalid { errors ->
+            errors[0].assertMatches("name", "must not be blank")
+        }
     }
 
     @Test
@@ -60,10 +62,11 @@ class ValidatorTest {
             }
         }
 
-        val result = validator.validate(User(name = "", tags = listOf(Tag(""), Tag("ok"))))
-        assertEquals(2, result.errors.size)
-        assertEquals("name", result.errors[0].path)
-        assertEquals("tags[0].value", result.errors[1].path)
+        val validated = validator.validate(User(name = "", tags = listOf(Tag(""), Tag("ok")))).toValidated()
+        validated.assertInvalid { errors ->
+            errors[0].assertMatches("name", "must not be blank")
+            errors[1].assertMatches("tags[0].value", "must not be blank")
+        }
     }
 
 }

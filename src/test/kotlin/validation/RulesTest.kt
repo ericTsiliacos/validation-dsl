@@ -4,91 +4,77 @@ import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 import validation.Rules.andThen
 import validation.Rules.combine
+import validation.Rules.fromPredicate
 
 class RulesTest {
 
     @Test
     fun `fromPredicate returns Valid when predicate passes`() {
-        val rule = Rules.fromPredicate<String>(
-            path = "field",
-            message = "must not be blank"
-        ) { it.isNotBlank() }
-
-        val result = rule("abc")
-        assertTrue(result is Validated.Valid)
+        val rule = fromPredicate<String>("field", "must not be blank") { it.isNotBlank() }
+        rule("abc").assertValid()
     }
 
     @Test
     fun `fromPredicate returns Invalid when predicate fails`() {
-        val rule = Rules.fromPredicate<String>(
-            path = "field",
-            message = "must not be blank"
-        ) { it.isNotBlank() }
-
-        val result = rule("")
-        assertTrue(result is Validated.Invalid)
-        val error = (result as Validated.Invalid).errors.first()
-        assertEquals("field", error.path)
-        assertEquals("must not be blank", error.message)
-        assertNull(error.code)
+        val rule = fromPredicate<String>("field", "must not be blank") { it.isNotBlank() }
+        rule("").assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be blank")
+        }
     }
 
     @Test
     fun `fromPredicate includes code when provided`() {
-        val rule = Rules.fromPredicate<String>(
+        val rule = fromPredicate<String>(
             path = "field",
             message = "must not be blank",
             code = "error.blank"
         ) { it.isNotBlank() }
 
-        val result = rule("")
-        val error = (result as Validated.Invalid).errors.first()
-        assertEquals("error.blank", error.code)
+        rule("").assertInvalid { errors ->
+            errors[0].assertMatches("field", "must not be blank", code = "error.blank")
+        }
     }
 
     @Test
     fun `andThen short-circuits if first rule fails`() {
-        val rule1 = Rules.fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
-        val rule2 = Rules.fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
-        val result = combined("")
-        val error = (result as Validated.Invalid).errors.first()
-        assertEquals("must not be empty", error.message)
+        combined("").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must not be empty")
+        }
     }
 
     @Test
     fun `andThen runs second rule only if first passes`() {
-        val rule1 = Rules.fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
-        val rule2 = Rules.fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
-        val result = combined("Hello")
-        val error = (result as Validated.Invalid).errors.first()
-        assertEquals("must be lowercase", error.message)
+        combined("Hello").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must be lowercase")
+        }
     }
 
     @Test
     fun `combine accumulates both errors`() {
-        val rule1 = Rules.fromPredicate<String>("x", "must be longer than 3") { it.length > 3 }
-        val rule2 = Rules.fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>("x", "must be longer than 3") { it.length > 3 }
+        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 combine rule2
 
-        val result = combined("Hello")
-        assertTrue(result is Validated.Invalid)
+        combined("Hello").assertInvalid { errors ->
+            assertEquals(1, errors.size)
+            errors[0].assertMatches("x", "must be lowercase")
+        }
 
-        val errors = (result as Validated.Invalid).errors
-        assertEquals(1, errors.size)
-        assertEquals("must be lowercase", errors[0].message)
-
-        val bothFail = combined("A")
-        val bothErrors = (bothFail as Validated.Invalid).errors
-        assertEquals(2, bothErrors.size)
-        assertEquals("must be longer than 3", bothErrors[0].message)
-        assertEquals("must be lowercase", bothErrors[1].message)
+        combined("A").assertInvalid { errors ->
+            errors[0].assertMatches("x", "must be longer than 3")
+            errors[1].assertMatches("x", "must be lowercase")
+        }
     }
 
 }

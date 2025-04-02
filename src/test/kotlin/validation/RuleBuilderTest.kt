@@ -1,6 +1,5 @@
 package validation
 
-import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 import validation.Rules.andThen
 import validation.Rules.combine
@@ -14,14 +13,11 @@ class RuleBuilderTest {
             it.isNotBlank()
         }
 
-        val pass = rule("hello")
-        val fail = rule("")
+        rule("hello").assertValid()
 
-        assertTrue(pass is Validated.Valid)
-        assertTrue(fail is Validated.Invalid)
-        val errors = (fail as Validated.Invalid).errors
-        assertEquals("username", errors[0].path)
-        assertEquals("must not be blank", errors[0].message)
+        rule("").assertInvalid { errors ->
+            errors[0].assertMatches("username", "must not be blank")
+        }
     }
 
     @Test
@@ -30,38 +26,28 @@ class RuleBuilderTest {
         val rule2 = fromPredicate<String>("age", "must be >= 18") { it.toInt() >= 18 }
         val chained = rule1 andThen rule2
 
-        val valid = chained("21")
-        assertTrue(valid is Validated.Valid)
+        chained("21").assertValid()
 
-        val invalidNumeric = chained("abc")
-        assertTrue(invalidNumeric is Validated.Invalid)
-        val errors = (invalidNumeric as Validated.Invalid).errors
-        assertEquals(1, errors.size)
-        assertEquals("must be numeric", errors[0].message)
+        chained("abc").assertInvalid { errors ->
+            errors[0].assertMatches("age", "must be numeric")
+        }
 
-        val invalidTooYoung = chained("17")
-        assertTrue(invalidTooYoung is Validated.Invalid)
-        assertEquals("must be >= 18", (invalidTooYoung as Validated.Invalid).errors[0].message)
+        chained("17").assertInvalid { errors ->
+            errors[0].assertMatches("age", "must be >= 18")
+        }
     }
 
     @Test
     fun `combine applies both rules and accumulates errors`() {
-        val r1 = fromPredicate<String>("username", "must be longer than 3") {
-            it.length > 3
-        }
-        val r2 = fromPredicate<String>("username", "must be lowercase") {
-            it == it.lowercase()
-        }
+        val r1 = fromPredicate<String>("username", "must be longer than 3") { it.length > 3 }
+        val r2 = fromPredicate<String>("username", "must be lowercase") { it == it.lowercase() }
 
         val combined = r1 combine r2
-        val result = combined("A")
 
-        assertTrue(result is Validated.Invalid)
-        val errors = (result as Validated.Invalid).errors
-
-        assertEquals(2, errors.size)
-        assertEquals("must be longer than 3", errors[0].message)
-        assertEquals("must be lowercase", errors[1].message)
+        combined("A").assertInvalid { errors ->
+            errors[0].assertMatches("username", "must be longer than 3")
+            errors[1].assertMatches("username", "must be lowercase")
+        }
     }
 
     @Test
@@ -70,8 +56,7 @@ class RuleBuilderTest {
             .andThen("must be 3 chars") { it.length == 3 }
 
         val built = builder.build()
-        val result = built("123")
-        assertTrue(result.isValid())
+        built("123").assertValid()
     }
 
 }
