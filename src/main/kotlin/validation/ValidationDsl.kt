@@ -48,7 +48,7 @@ fun <T : Any> FieldValidationScope<T?>.whenNotNull(
  * Example:
  * ```
  * validate(User::tags) {
- *     validateEachItem {
+ *     validateEach {
  *         rule("must not be blank") { it.isNotBlank() }
  *     }
  * }
@@ -56,7 +56,7 @@ fun <T : Any> FieldValidationScope<T?>.whenNotNull(
  *
  * Produces paths like `tags[0]`, `tags[1]`, etc.
  */
-fun <T> FieldValidationScope<List<T>>.validateEachItem(
+fun <T> FieldValidationScope<List<T>>.validateEach(
     block: FieldValidationScope<T>.() -> Unit
 ) {
     this.nested += {

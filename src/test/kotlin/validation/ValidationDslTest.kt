@@ -101,9 +101,9 @@ class ValidationDslTest {
     }
 
     @Test
-    fun `validateEachItem validates each item in list`() {
+    fun `validateEach validates each item in list`() {
         val result = fieldScope("tags", listOf("", "ok", " ")) {
-            validateEachItem {
+            validateEach {
                 rule("must not be blank") { it.isNotBlank() }
             }
         }
@@ -115,9 +115,9 @@ class ValidationDslTest {
     }
 
     @Test
-    fun `validateEachItem handles empty list as valid`() {
+    fun `validateEach handles empty list as valid`() {
         val result = fieldScope("tags", emptyList<String>()) {
-            validateEachItem {
+            validateEach {
                 rule("must not be blank") { it.isNotBlank() }
             }
         }
