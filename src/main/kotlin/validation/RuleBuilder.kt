@@ -1,7 +1,5 @@
 package validation
 
-typealias Rule<T> = (T) -> Validated<Unit>
-
 @ValidationDsl
 class RuleBuilder<R>(
     private var rule: Rule<R>

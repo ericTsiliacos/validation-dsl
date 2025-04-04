@@ -145,36 +145,8 @@ infix fun <T> Rule<T>.combine(other: Rule<T>): Rule<T> = { value ->
 }
 
 /**
- * Creates a rule from a simple predicate function.
- *
- * If the [predicate] returns false, the rule fails with the given [message], [path], and optional [code].
- *
- * This is the most common way to define field validations.
- *
- * Example:
- * ```kotlin
- * val rule = fromPredicate("email", "must contain @") { it.contains("@") }
- * ```
- */
-fun <T> fromPredicate(
-    path: String,
-    message: String,
-    code: String? = null,
-    predicate: (T) -> Boolean
-): Rule<T> = { value ->
-    if (predicate(value)) {
-        Validated.Valid(Unit)
-    } else {
-        Validated.Invalid(
-            listOf(ValidationError(path, message, code))
-        )
-    }
-}
-
-/**
  * Defines a path-agnostic rule based on a predicate and error message.
  *
- * Unlike [fromPredicate], this function omits the need to specify a `path` up front.
  * The surrounding validation scope will inject the correct path automatically.
  *
  * This is ideal for reusable or generic rules where the field path isn't known ahead of time.
