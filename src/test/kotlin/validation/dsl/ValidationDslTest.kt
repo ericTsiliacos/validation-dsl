@@ -150,6 +150,44 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `validateEach works on List root`() {
+        val result = fieldScope(PropertyPath("tags"), listOf("", "ok", " ")) {
+            validateEach {
+                rule("must not be blank") { it.isNotBlank() }
+            }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches(PropertyPath("tags").index(0), "must not be blank")
+            errors[1].assertMatches(PropertyPath("tags").index(2), "must not be blank")
+        }
+    }
+
+    @Test
+    fun `validateEach with empty list is valid`() {
+        val result = fieldScope(PropertyPath("tags"), emptyList<String>()) {
+            validateEach {
+                rule("must not be blank") { it.isNotBlank() }
+            }
+        }
+
+        result.assertValid()
+    }
+
+    @Test
+    fun `validateEach handles null items safely`() {
+        val result = fieldScope(PropertyPath("tags"), listOf(null, "ok", null)) {
+            validateEach {
+                whenNotNull {
+                    rule("must not be blank") { it.isNotBlank() }
+                }
+            }
+        }
+
+        result.assertValid()
+    }
+
+    @Test
     fun `validateEach validates each item in list`() {
         val result = fieldScope("tags", listOf("", "ok", " ")) {
             validateEach {
