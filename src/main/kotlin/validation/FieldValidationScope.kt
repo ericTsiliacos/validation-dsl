@@ -28,7 +28,6 @@ class FieldValidationScope<R>(
         rules += wrapped
     }
 
-
     fun <E> validate(
         prop: KProperty1<R, E>,
         block: FieldValidationScope<E>.() -> Unit

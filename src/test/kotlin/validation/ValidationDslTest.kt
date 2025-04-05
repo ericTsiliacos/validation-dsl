@@ -10,6 +10,57 @@ class ValidationDslTest {
     data class Customer(val address: Address)
 
     @Test
+    fun `use preserves error path if already set`() {
+        val customRule: Rule<String> = {
+            Validated.Invalid(listOf(ValidationError("custom.path", "custom error")))
+        }
+
+        val result = fieldScope("username", "value") {
+            use(customRule)
+        }
+
+        result.assertInvalid { errors ->
+            assertEquals(1, errors.size)
+            errors[0].assertMatches("custom.path", "custom error")
+        }
+    }
+
+    @Test
+    fun `use returns valid result unchanged`() {
+        val validRule: Rule<String> = {
+            Validated.Valid(Unit)
+        }
+
+        val result = fieldScope("username", "value") {
+            use(validRule)
+        }
+
+        result.assertValid()
+    }
+
+    @Test
+    fun `use injects path only for errors with blank path`() {
+        val customRule: Rule<String> = {
+            Validated.Invalid(
+                listOf(
+                    ValidationError("", "missing path"),
+                    ValidationError("existing.path", "has path")
+                )
+            )
+        }
+
+        val result = fieldScope("username", "value") {
+            use(customRule)
+        }
+
+        result.assertInvalid { errors ->
+            assertEquals(2, errors.size)
+            errors[0].assertMatches("username", "missing path")
+            errors[1].assertMatches("existing.path", "has path")
+        }
+    }
+
+    @Test
     fun `validator builds and runs validation`() {
         val v = validator {
             validate(User::name) {
@@ -344,43 +395,6 @@ class ValidationDslTest {
         combined("A").assertInvalid { errors ->
             errors[0].assertMatches("x", "must be longer than 3")
             errors[1].assertMatches("x", "must be lowercase")
-        }
-    }
-
-    @Test
-    fun `predicate assigns path automatically when used in validation scope`() {
-        val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
-
-        val result = fieldScope("username", "") {
-            rule(notBlank)
-        }
-
-        result.assertInvalid { errors ->
-            errors[0].assertMatches("username", "must not be blank")
-        }
-    }
-
-    @Test
-    fun `predicate passes validation when condition is met`() {
-        val atLeast3 = predicate<String>("must be at least 3 characters") { it.length >= 3 }
-
-        val result = fieldScope("name", "Bob") {
-            rule(atLeast3)
-        }
-
-        result.assertValid()
-    }
-
-    @Test
-    fun `predicate supports optional code`() {
-        val coded = predicate<String>("must be numeric", code = "numeric") { it.all(Char::isDigit) }
-
-        val result = fieldScope("age", "abc") {
-            rule(coded)
-        }
-
-        result.assertInvalid { errors ->
-            errors[0].assertMatches("age", "must be numeric", code = "numeric")
         }
     }
 

@@ -18,6 +18,59 @@ fun <T> validator(block: Validator<T>.() -> Unit): Validator<T> =
     Validator<T>().apply(block)
 
 /**
+ * Creates a reusable, path-agnostic validation rule.
+ */
+fun <T> rule(
+    message: String,
+    code: String? = null,
+    group: String? = null,
+    predicate: (T) -> Boolean
+): Rule<T> = { value ->
+    if (predicate(value)) {
+        Validated.Valid(Unit)
+    } else {
+        Validated.Invalid(
+            listOf(ValidationError(path = "", message = message, code = code, group = group))
+        )
+    }
+}
+
+/**
+ * Applies a reusable, path-agnostic [Rule] within the current validation context.
+ *
+ * This function is intended for use within a [FieldValidationScope], where the field `path`
+ * is known and can be injected automatically into any [ValidationError]s produced by the rule.
+ *
+ * Reusable rules defined outside the DSL (e.g., via [rule]) typically omit the `path` so they
+ * can be reused across different validation contexts. This function ensures that the correct
+ * path is applied at the point of usage.
+ *
+ * Example:
+ * ```
+ * val notBlank = rule<String>("must not be blank") { it.isNotBlank() }
+ *
+ * validate(User::name) {
+ *     use(notBlank) // injects "name" as the error path
+ * }
+ * ```
+ *
+ * @param rule A reusable validation rule defined without a path.
+ */
+@ValidationDsl
+fun <T> FieldValidationScope<T>.use(rule: Rule<T>) {
+    val wrapped: Rule<T> = { value ->
+        val result = rule(value)
+        if (result is Validated.Invalid) {
+            Validated.Invalid(result.errors.map { err ->
+                if (err.path.isBlank()) err.copy(path = path) else err
+            })
+        } else result
+    }
+
+    this@use.rule(wrapped)
+}
+
+/**
  * Executes the [block] only if the current value is non-null.
  *
  * This is useful for conditionally applying rules to optional fields:
@@ -142,31 +195,6 @@ infix fun <T> Rule<T>.combine(other: Rule<T>): Rule<T> = { value ->
     val r1 = this(value)
     val r2 = other(value)
     combineResults(r1, r2).map { }
-}
-
-/**
- * Defines a path-agnostic rule based on a predicate and error message.
- *
- * The surrounding validation scope will inject the correct path automatically.
- *
- * This is ideal for reusable or generic rules where the field path isn't known ahead of time.
- *
- * Example:
- * ```kotlin
- * val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
- *
- * validate(User::name) {
- *     rule(notBlank) // 'name' path is injected automatically
- * }
- * ```
- */
-fun <T> predicate(
-    message: String,
-    code: String? = null,
-    test: (T) -> Boolean
-): Rule<T> = { value ->
-    if (test(value)) Validated.Valid(Unit)
-    else Validated.Invalid(listOf(ValidationError("", message, code)))
 }
 
 /**
