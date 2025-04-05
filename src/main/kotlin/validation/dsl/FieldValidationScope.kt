@@ -1,5 +1,6 @@
-package validation
+package validation.dsl
 
+import validation.core.*
 import kotlin.reflect.KProperty1
 
 @ValidationDsl

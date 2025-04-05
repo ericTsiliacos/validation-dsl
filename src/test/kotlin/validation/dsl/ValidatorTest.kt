@@ -1,6 +1,9 @@
-package validation
+package validation.dsl
 
 import org.testng.annotations.Test
+import validation.core.assertInvalid
+import validation.core.assertMatches
+import validation.core.toValidated
 
 class ValidatorTest {
 

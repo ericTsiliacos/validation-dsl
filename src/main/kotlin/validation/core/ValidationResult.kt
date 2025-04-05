@@ -1,4 +1,4 @@
-package validation
+package validation.core
 
 data class ValidationError(
     val path: String,

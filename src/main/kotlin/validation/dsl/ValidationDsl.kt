@@ -1,4 +1,6 @@
-package validation
+package validation.dsl
+
+import validation.core.*
 
 /**
  * Entry point for creating a [Validator] using a fluent DSL.
@@ -82,6 +84,7 @@ fun <T> FieldValidationScope<T>.use(rule: Rule<T>) {
  * }
  * ```
  */
+@ValidationDsl
 fun <T : Any> FieldValidationScope<T?>.whenNotNull(
     block: FieldValidationScope<T>.() -> Unit
 ) {
@@ -109,6 +112,7 @@ fun <T : Any> FieldValidationScope<T?>.whenNotNull(
  *
  * Produces paths like `tags[0]`, `tags[1]`, etc.
  */
+@ValidationDsl
 fun <T> FieldValidationScope<List<T>>.validateEach(
     block: FieldValidationScope<T>.() -> Unit
 ) {
@@ -140,6 +144,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
  *
  * If no rules are defined, nothing is added.
  */
+@ValidationDsl
 fun <T> FieldValidationScope<T>.dependent(
     block: RuleChainScope<T>.() -> Unit
 ) {
@@ -148,67 +153,6 @@ fun <T> FieldValidationScope<T>.dependent(
         this.rule(chain)
     }
 }
-
-/**
- * Composes two rules into a short-circuiting sequence.
- *
- * If the first rule passes, the second rule is evaluated.
- * Otherwise, the first rule's error is returned immediately.
- *
- * Example:
- * ```kotlin
- * val numeric = Rules.fromPredicate<String>("age", "must be numeric") { it.all(Char::isDigit) }
- * val over18 = Rules.fromPredicate<String>("age", "must be ≥ 18") { it.toInt() >= 18 }
- *
- * val ageRule = numeric andThen over18
- *
- * validate(User::age) {
- *     rule(ageRule)
- * }
- * ```
- */
-infix fun <T> Rule<T>.andThen(next: Rule<T>): Rule<T> = { value ->
-    this(value).flatMap { next(value) }
-}
-
-/**
- * Composes two rules and evaluates them independently.
- *
- * Both rules are executed regardless of whether the first one passes or fails,
- * and any resulting errors are combined.
- *
- * This is useful when validations are independent but should be grouped together.
- *
- * Example:
- * ```kotlin
- * val notBlank = Rules.fromPredicate("username", "must not be blank") { it.isNotBlank() }
- * val isLowercase = Rules.fromPredicate("username", "must be lowercase") { it == it.lowercase() }
- *
- * val combined = notBlank combine isLowercase
- *
- * validate(User::username) {
- *     rule(combined)
- * }
- * ```
- */
-infix fun <T> Rule<T>.combine(other: Rule<T>): Rule<T> = { value ->
-    val r1 = this(value)
-    val r2 = other(value)
-    combineResults(r1, r2).map { }
-}
-
-/**
- * Wraps an existing rule function that returns a [Validated] result.
- *
- * Useful for composing or adapting low-level rule logic into the standard [Rule] type.
- *
- * Example:
- * ```kotlin
- * val custom: Rule<String> = { if (it.length > 5) Validated.Valid(Unit) else Validated.Invalid(...) }
- * val rule = fromFunction(custom)
- * ```
- */
-fun <T> fromFunction(rule: (T) -> Validated<Unit>): Rule<T> = rule
 
 /**
  * Groups related validation rules under a label.
@@ -231,6 +175,7 @@ fun <T> fromFunction(rule: (T) -> Validated<Unit>): Rule<T> = rule
  *
  * @param label A logical name for organizing related rules (e.g., "identity", "address checks").
  */
+@ValidationDsl
 fun <T> FieldValidationScope<T>.group(
     label: String,
     block: FieldValidationScope<T>.() -> Unit

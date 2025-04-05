@@ -1,6 +1,7 @@
-package validation
+package validation.dsl
 
 import org.testng.annotations.Test
+import validation.core.*
 
 class FieldValidationScopeTest {
 

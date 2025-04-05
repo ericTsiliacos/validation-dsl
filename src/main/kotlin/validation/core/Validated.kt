@@ -1,4 +1,4 @@
-package validation
+package validation.core
 
 sealed class Validated<out T> {
     data class Valid<T>(val value: T) : Validated<T>()

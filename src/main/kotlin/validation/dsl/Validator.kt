@@ -1,5 +1,9 @@
-package validation
+package validation.dsl
 
+import validation.core.Validated
+import validation.core.ValidationResult
+import validation.core.combineResults
+import validation.core.map
 import kotlin.reflect.KProperty1
 
 @ValidationDsl

@@ -1,4 +1,4 @@
-package validation
+package validation.core
 
 import org.testng.Assert.assertNull
 import org.testng.annotations.Test

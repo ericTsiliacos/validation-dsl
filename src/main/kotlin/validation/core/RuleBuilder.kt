@@ -1,4 +1,7 @@
-package validation
+package validation.core
+
+import validation.dsl.ValidationDsl
+import validation.extensions.andThen
 
 @ValidationDsl
 class RuleBuilder<R>(
