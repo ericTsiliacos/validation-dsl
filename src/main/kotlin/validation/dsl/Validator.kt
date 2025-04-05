@@ -1,9 +1,6 @@
 package validation.dsl
 
-import validation.core.Validated
-import validation.core.ValidationResult
-import validation.core.combineResults
-import validation.core.map
+import validation.core.*
 import kotlin.reflect.KProperty1
 
 @ValidationDsl
@@ -31,7 +28,7 @@ class Validator<T> {
                     val path = "${prop.name}[$index]"
                     FieldValidationScope(path, { item }).apply(block).evaluate()
                 }.toTypedArray()
-            ).map { }
+            ).toUnit()
         }
     }
 

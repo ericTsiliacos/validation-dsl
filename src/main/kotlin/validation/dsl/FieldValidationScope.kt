@@ -50,7 +50,7 @@ class FieldValidationScope<R>(
         val nestedResults = nested.map { it() }
 
         val allResults = ruleResults + nestedResults
-        return combineResults(*allResults.toTypedArray()).map { }
+        return combineResults(*allResults.toTypedArray()).toUnit()
     }
 
     private fun combinePath(parent: String, child: String): String =

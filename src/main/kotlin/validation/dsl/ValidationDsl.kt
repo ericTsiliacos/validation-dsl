@@ -130,7 +130,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
             val itemPath = "${this.path}[$index]"
             FieldValidationScope(itemPath) { item }.apply(block).evaluate()
         }
-        combineResults(*results.toTypedArray()).map { }
+        combineResults(*results.toTypedArray()).toUnit()
     }
 }
 

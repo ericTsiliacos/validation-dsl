@@ -1,9 +1,9 @@
 package validation.dsl
 
+import org.testng.AssertJUnit.assertEquals
+import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
-import validation.core.assertInvalid
-import validation.core.assertMatches
-import validation.core.toValidated
+import validation.core.*
 
 class ValidatorTest {
 
@@ -70,6 +70,28 @@ class ValidatorTest {
             errors[0].assertMatches("name", "must not be blank")
             errors[1].assertMatches("tags[0].value", "must not be blank")
         }
+    }
+
+
+    @Test
+    fun `toUnit on Valid should return Valid of Unit`() {
+        val validated: Validated<String> = Validated.Valid("hello")
+
+        val result = validated.toUnit()
+
+        assertTrue(result is Validated.Valid)
+        assertEquals(Unit, (result as Validated.Valid).value)
+    }
+
+    @Test
+    fun `toUnit on Invalid should return same Invalid`() {
+        val error = ValidationError("path", "error message", "ERR")
+        val validated: Validated<String> = Validated.Invalid(listOf(error))
+
+        val result = validated.toUnit()
+
+        assertTrue(result is Validated.Invalid)
+        assertEquals(listOf(error), (result as Validated.Invalid).errors)
     }
 
 }

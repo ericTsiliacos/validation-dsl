@@ -29,6 +29,11 @@ fun <A, B> Validated<A>.flatMap(f: (A) -> Validated<B>): Validated<B> = when (th
     is Validated.Invalid -> this
 }
 
+fun <T> Validated<T>.toUnit(): Validated<Unit> = when (this) {
+    is Validated.Valid -> Validated.Valid(Unit)
+    is Validated.Invalid -> this
+}
+
 fun <T> combineResults(vararg results: Validated<T>): Validated<List<T>> {
     val errors = results.filterIsInstance<Validated.Invalid>().flatMap { it.errors }
     return if (errors.isEmpty()) {
