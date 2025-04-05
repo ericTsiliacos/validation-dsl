@@ -38,38 +38,46 @@ fun <T> rule(
 }
 
 /**
- * Applies a reusable, path-agnostic [Rule] within the current validation context.
- *
- * This function is intended for use within a [FieldValidationScope], where the field `path`
- * is known and can be injected automatically into any [ValidationError]s produced by the rule.
- *
- * Reusable rules defined outside the DSL (e.g., via [rule]) typically omit the `path` so they
- * can be reused across different validation contexts. This function ensures that the correct
- * path is applied at the point of usage.
- *
- * Example:
- * ```
- * val notBlank = rule<String>("must not be blank") { it.isNotBlank() }
- *
- * validate(User::name) {
- *     use(notBlank) // injects "name" as the error path
- * }
- * ```
- *
- * @param rule A reusable validation rule defined without a path.
+ * DSL entry point for defining reusable, path-agnostic rules.
+ */
+fun <T> predicate(
+    message: String,
+    code: String? = null,
+    group: String? = null,
+    check: (T) -> Boolean
+): Rule<T> = { value ->
+    if (check(value)) Validated.Valid(Unit)
+    else Validated.Invalid(listOf(ValidationError("", message, code, group)))
+}
+
+/**
+ * Injects current path into reusable predicate.
  */
 @ValidationDsl
-fun <T> FieldValidationScope<T>.use(rule: Rule<T>) {
+fun <T> FieldValidationScope<T>.rule(rule: Rule<T>) {
     val wrapped: Rule<T> = { value ->
         val result = rule(value)
         if (result is Validated.Invalid) {
-            Validated.Invalid(result.errors.map { err ->
-                if (err.path.isBlank()) err.copy(path = path) else err
+            Validated.Invalid(result.errors.map {
+                if (it.path.isBlank()) it.copy(path = path) else it
             })
         } else result
     }
+    this.rules += wrapped
+}
 
-    this@use.rule(wrapped)
+/**
+ * DSL sugar for inline rule definition inside validation blocks.
+ */
+@ValidationDsl
+fun <T> FieldValidationScope<T>.rule(
+    message: String,
+    code: String? = null,
+    group: String? = null,
+    check: Function1<T, Boolean>
+) {
+    val predicate = predicate(message, code, group, check)
+    rule(predicate)
 }
 
 /**

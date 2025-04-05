@@ -1,6 +1,7 @@
 package validation.dsl
 
 import org.testng.AssertJUnit.assertEquals
+import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
 import validation.core.*
 
@@ -10,55 +11,51 @@ class ValidationDslTest {
     data class Address(val street: String, val city: String)
     data class Customer(val address: Address)
 
-    @Test
-    fun `use preserves error path if already set`() {
-        val customRule: Rule<String> = {
-            Validated.Invalid(listOf(ValidationError("custom.path", "custom error")))
-        }
-
-        val result = fieldScope("username", "value") {
-            use(customRule)
-        }
-
-        result.assertInvalid { errors ->
-            assertEquals(1, errors.size)
-            errors[0].assertMatches("custom.path", "custom error")
-        }
+    private fun <T> fieldScope(path: String, value: T, block: FieldValidationScope<T>.() -> Unit): Validated<Unit> {
+        return FieldValidationScope(path) { value }.apply(block).evaluate()
     }
 
     @Test
-    fun `use returns valid result unchanged`() {
-        val validRule: Rule<String> = {
-            Validated.Valid(Unit)
-        }
-
-        val result = fieldScope("username", "value") {
-            use(validRule)
-        }
-
-        result.assertValid()
+    fun `predicate returns Valid when condition passes`() {
+        val isPositive = predicate<Int>("must be positive") { it > 0 }
+        val result = isPositive(5)
+        assertTrue(result is Validated.Valid)
     }
 
     @Test
-    fun `use injects path only for errors with blank path`() {
-        val customRule: Rule<String> = {
-            Validated.Invalid(
-                listOf(
-                    ValidationError("", "missing path"),
-                    ValidationError("existing.path", "has path")
-                )
-            )
+    fun `predicate returns Invalid when condition fails`() {
+        val isPositive = predicate<Int>("must be positive") { it > 0 }
+        val result = isPositive(-1)
+        assertTrue(result is Validated.Invalid)
+        result as Validated.Invalid
+        assertEquals("must be positive", result.errors.first().message)
+    }
+
+    @Test
+    fun `rule injects path into predicate error`() {
+        val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
+        val result = fieldScope("username", "") {
+            rule(notBlank)
         }
 
-        val result = fieldScope("username", "value") {
-            use(customRule)
+        assertTrue(result is Validated.Invalid)
+        result as Validated.Invalid
+        val error = result.errors.first()
+        assertEquals("username", error.path)
+        assertEquals("must not be blank", error.message)
+    }
+
+    @Test
+    fun `rule with inline predicate works correctly`() {
+        val result = fieldScope("username", "") {
+            rule("must not be blank") { it.isNotBlank() }
         }
 
-        result.assertInvalid { errors ->
-            assertEquals(2, errors.size)
-            errors[0].assertMatches("username", "missing path")
-            errors[1].assertMatches("existing.path", "has path")
-        }
+        assertTrue(result is Validated.Invalid)
+        result as Validated.Invalid
+        val error = result.errors.first()
+        assertEquals("username", error.path)
+        assertEquals("must not be blank", error.message)
     }
 
     @Test

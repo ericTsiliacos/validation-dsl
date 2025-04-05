@@ -8,25 +8,13 @@ class FieldValidationScope<R>(
     internal val path: String,
     internal val getter: () -> R
 ) {
-    private val rules = mutableListOf<Rule<R>>()
+    internal val rules = mutableListOf<Rule<R>>()
     internal val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
 
     fun rule(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
         val rule = fromPredicate(path = path, message = message, predicate = predicate)
         rules += rule
         return RuleBuilder(rule)
-    }
-
-    fun rule(rule: Rule<R>) {
-        val wrapped: Rule<R> = { value ->
-            val result = rule(value)
-            if (result is Validated.Invalid) {
-                Validated.Invalid(result.errors.map { err ->
-                    if (err.path.isBlank()) err.copy(path = path) else err
-                })
-            } else result
-        }
-        rules += wrapped
     }
 
     fun <E> validate(

@@ -19,7 +19,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    testImplementation("org.testng:testng:7.7.0")
+    testImplementation("org.testng:testng:7.8.0")
+    testImplementation("org.slf4j:slf4j-nop:2.0.17")
 }
 
 jacoco {
