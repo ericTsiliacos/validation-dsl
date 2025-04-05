@@ -4,7 +4,7 @@ import org.testng.AssertJUnit.*
 import validation.dsl.FieldValidationScope
 
 fun ValidationError.assertMatches(
-    path: String,
+    path: PropertyPath,
     message: String,
     code: String? = null,
     group: String? = null
@@ -13,6 +13,25 @@ fun ValidationError.assertMatches(
     assertEquals(this.message, message)
     if (code != null) assertEquals(this.code, code)
     if (group != null) assertEquals(this.group, group)
+}
+
+fun ValidationError.assertMatches(path: String, message: String, code: String? = null, group: String? = null) {
+    assert(this.path.toString() == path) {
+        "Expected path '$path' but got '${this.path}'"
+    }
+    assert(this.message == message) {
+        "Expected message '$message' but got '${this.message}'"
+    }
+    if (code != null) {
+        assert(this.code == code) {
+            "Expected code '$code' but got '${this.code}'"
+        }
+    }
+    if (group != null) {
+        assert(this.group == group) {
+            "Expected group '$group' but got '${this.group}'"
+        }
+    }
 }
 
 inline fun <T> Validated<T>.assertInvalid(block: (List<ValidationError>) -> Unit) {
@@ -24,7 +43,7 @@ fun <T> Validated<T>.assertValid() {
     assertTrue(this is Validated.Valid)
 }
 
-fun <T> fieldScope(path: String, value: T, block: FieldValidationScope<T>.() -> Unit): Validated<Unit> {
+fun <T> fieldScope(path: PropertyPath, value: T, block: FieldValidationScope<T>.() -> Unit): Validated<Unit> {
     val scope = FieldValidationScope(path) { value }
     scope.block()
     return scope.evaluate()

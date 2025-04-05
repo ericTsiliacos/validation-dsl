@@ -5,7 +5,7 @@ import kotlin.reflect.KProperty1
 
 @ValidationDsl
 class FieldValidationScope<R>(
-    internal val path: String,
+    internal val path: PropertyPath,
     internal val getter: () -> R
 ) {
     internal val rules = mutableListOf<Rule<R>>()
@@ -21,10 +21,10 @@ class FieldValidationScope<R>(
         prop: KProperty1<R, E>,
         block: FieldValidationScope<E>.() -> Unit
     ) {
-        val subPath = combinePath(path, prop.name)
+        val subPath = path.child(prop.name)
         nested += {
             val value = prop.get(getter())
-            FieldValidationScope(subPath, { value }).apply(block).evaluate()
+            FieldValidationScope(subPath) { value }.apply(block).evaluate()
         }
     }
 
@@ -32,14 +32,14 @@ class FieldValidationScope<R>(
         prop: KProperty1<R, List<E>>,
         block: FieldValidationScope<E>.() -> Unit
     ) {
-        val listPath = combinePath(path, prop.name)
+        val listPath = path.child(prop.name)
         nested += {
             val list = prop.get(getter())
             val results = list.mapIndexed { index, item ->
-                val itemPath = "$listPath[$index]"
+                val itemPath = listPath.index(index)
                 FieldValidationScope(itemPath) { item }.apply(block).evaluate()
             }
-            combineResults(*results.toTypedArray()).map { }
+            combineResults(*results.toTypedArray()).toUnit()
         }
     }
 
@@ -52,8 +52,5 @@ class FieldValidationScope<R>(
         val allResults = ruleResults + nestedResults
         return combineResults(*allResults.toTypedArray()).toUnit()
     }
-
-    private fun combinePath(parent: String, child: String): String =
-        if (parent.isEmpty()) child else "$parent.$child"
 
 }

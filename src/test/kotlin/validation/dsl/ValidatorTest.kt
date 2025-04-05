@@ -85,7 +85,7 @@ class ValidatorTest {
 
     @Test
     fun `toUnit on Invalid should return same Invalid`() {
-        val error = ValidationError("path", "error message", "ERR")
+        val error = ValidationError(PropertyPath("path"), "error message", "ERR")
         val validated: Validated<String> = Validated.Invalid(listOf(error))
 
         val result = validated.toUnit()

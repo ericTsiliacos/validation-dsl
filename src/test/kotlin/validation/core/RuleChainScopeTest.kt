@@ -7,14 +7,14 @@ class RuleChainScopeTest {
 
     @Test
     fun `build returns null when no rules are added`() {
-        val scope = RuleChainScope<String>("username")
+        val scope = RuleChainScope<String>(PropertyPath("username"))
         val result = scope.build()
         assertNull(result)
     }
 
     @Test
     fun `build returns single rule when only one is added`() {
-        val scope = RuleChainScope<String>("username")
+        val scope = RuleChainScope<String>(PropertyPath("username"))
         scope.rule("must not be blank") { it.isNotBlank() }
 
         val rule = scope.build()
@@ -26,7 +26,7 @@ class RuleChainScopeTest {
 
     @Test
     fun `build returns chained rule that short-circuits on failure`() {
-        val scope = RuleChainScope<String>("username")
+        val scope = RuleChainScope<String>(PropertyPath("username"))
         scope.rule("must not be blank") { it.isNotBlank() }
         scope.rule("must be lowercase") { it == it.lowercase() }
 
@@ -39,7 +39,7 @@ class RuleChainScopeTest {
 
     @Test
     fun `build returns chained rule that evaluates all if prior rules pass`() {
-        val scope = RuleChainScope<String>("username")
+        val scope = RuleChainScope<String>(PropertyPath("username"))
         scope.rule("must not be blank") { it.isNotBlank() }
         scope.rule("must be lowercase") { it == it.lowercase() }
 
@@ -52,7 +52,7 @@ class RuleChainScopeTest {
 
     @Test
     fun `chained rule returns valid if all pass`() {
-        val scope = RuleChainScope<String>("username")
+        val scope = RuleChainScope<String>(PropertyPath("username"))
         scope.rule("must not be blank") { it.isNotBlank() }
         scope.rule("must be lowercase") { it == it.lowercase() }
 

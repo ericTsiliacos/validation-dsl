@@ -8,8 +8,8 @@ class CombinatorsTest {
 
     @Test
     fun `andThen short-circuits if first rule fails`() {
-        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
-        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>(PropertyPath("x"), "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
@@ -20,8 +20,8 @@ class CombinatorsTest {
 
     @Test
     fun `andThen runs second rule only if first passes`() {
-        val rule1 = fromPredicate<String>("x", "must not be empty") { it.isNotEmpty() }
-        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>(PropertyPath("x"), "must not be empty") { it.isNotEmpty() }
+        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
@@ -32,8 +32,8 @@ class CombinatorsTest {
 
     @Test
     fun `combine accumulates both errors`() {
-        val rule1 = fromPredicate<String>("x", "must be longer than 3") { it.length > 3 }
-        val rule2 = fromPredicate<String>("x", "must be lowercase") { it == it.lowercase() }
+        val rule1 = fromPredicate<String>(PropertyPath("x"), "must be longer than 3") { it.length > 3 }
+        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 combine rule2
 
@@ -59,7 +59,7 @@ class CombinatorsTest {
     @Test
     fun `fromFunction handles null safely if rule allows`() {
         val rule = fromFunction<String?> {
-            if (it == null) Validated.Invalid(listOf(ValidationError("field", "must not be null")))
+            if (it == null) Validated.Invalid(listOf(ValidationError(PropertyPath("field"), "must not be null")))
             else Validated.Valid(Unit)
         }
 
@@ -72,7 +72,7 @@ class CombinatorsTest {
     fun `fromFunction supports reusable rule objects`() {
         val reusableRule: Rule<String> = {
             if (it.startsWith("a")) Validated.Valid(Unit)
-            else Validated.Invalid(listOf(ValidationError("value", "must start with 'a'")))
+            else Validated.Invalid(listOf(ValidationError(PropertyPath("value"), "must start with 'a'")))
         }
 
         val rule1 = fromFunction(reusableRule)
@@ -88,7 +88,7 @@ class CombinatorsTest {
     fun `fromFunction wraps raw rule correctly`() {
         val rawRule: Rule<String> = { input ->
             if (input.length > 3) Validated.Valid(Unit)
-            else Validated.Invalid(listOf(ValidationError("field", "too short")))
+            else Validated.Invalid(listOf(ValidationError(PropertyPath("field"), "too short")))
         }
 
         val rule = fromFunction(rawRule)

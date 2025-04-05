@@ -12,7 +12,7 @@ class ValidationDslTest {
     data class Customer(val address: Address)
 
     private fun <T> fieldScope(path: String, value: T, block: FieldValidationScope<T>.() -> Unit): Validated<Unit> {
-        return FieldValidationScope(path) { value }.apply(block).evaluate()
+        return FieldValidationScope(PropertyPath(path)) { value }.apply(block).evaluate()
     }
 
     @Test
@@ -41,7 +41,7 @@ class ValidationDslTest {
         assertTrue(result is Validated.Invalid)
         result as Validated.Invalid
         val error = result.errors.first()
-        assertEquals("username", error.path)
+        assertEquals("username", error.path.toString())
         assertEquals("must not be blank", error.message)
     }
 
@@ -54,7 +54,7 @@ class ValidationDslTest {
         assertTrue(result is Validated.Invalid)
         result as Validated.Invalid
         val error = result.errors.first()
-        assertEquals("username", error.path)
+        assertEquals("username", error.path.toString())
         assertEquals("must not be blank", error.message)
     }
 
@@ -121,7 +121,7 @@ class ValidationDslTest {
             whenNotNull {
                 dependent {
                     rule("must be numeric") { it.all(Char::isDigit) }
-                    rule("must be ≥ 3 digits") { it.length >= 3 }
+                    rule("must be greater than or equal to 3 digits") { it.length >= 3 }
                 }
             }
         }
@@ -224,8 +224,8 @@ class ValidationDslTest {
     fun `ValidationError supports multiple codes for same path`() {
         val result = Validated.Invalid(
             listOf(
-                ValidationError("field", "too short", code = "short"),
-                ValidationError("field", "must be lowercase", code = "lowercase")
+                ValidationError(PropertyPath("field"), "too short", code = "short"),
+                ValidationError(PropertyPath("field"), "must be lowercase", code = "lowercase")
             )
         )
 
@@ -240,7 +240,7 @@ class ValidationDslTest {
         val result = fieldScope("age", "abc") {
             dependent {
                 rule("must be numeric") { it.all(Char::isDigit) }
-                rule("must be ≥ 18") { it.toInt() >= 18 }
+                rule("must be greater than or equal to 18") { it.toInt() >= 18 }
             }
         }
 
@@ -254,12 +254,12 @@ class ValidationDslTest {
         val result = fieldScope("age", "15") {
             dependent {
                 rule("must be numeric") { it.all(Char::isDigit) }
-                rule("must be ≥ 18") { it.toInt() >= 18 }
+                rule("must be greater than or equal to 18") { it.toInt() >= 18 }
             }
         }
 
         result.assertInvalid { errors ->
-            errors[0].assertMatches("age", "must be ≥ 18")
+            errors[0].assertMatches("age", "must be greater than or equal to 18")
         }
     }
 

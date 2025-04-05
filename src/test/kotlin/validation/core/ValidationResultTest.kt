@@ -13,13 +13,13 @@ class ValidationResultTest {
 
     @Test
     fun `ValidationResult isValid returns false when there are errors`() {
-        val result = ValidationResult(listOf(ValidationError("field", "must not be blank")))
+        val result = ValidationResult(listOf(ValidationError(PropertyPath("field"), "must not be blank")))
         assertFalse(result.isValid)
     }
 
     @Test
     fun `ValidationError contains path and message`() {
-        val error = ValidationError("name", "must not be blank")
+        val error = ValidationError(PropertyPath("name"), "must not be blank")
         error.assertMatches("name", "must not be blank")
     }
 
@@ -32,7 +32,7 @@ class ValidationResultTest {
 
     @Test
     fun `from returns invalid result when Validated is Invalid`() {
-        val error = ValidationError("field", "error")
+        val error = ValidationError(PropertyPath("field"), "error")
         val validated: Validated<Unit> = Validated.Invalid(listOf(error))
         val result = ValidationResult.from(validated)
         assertFalse(result.isValid)
@@ -41,8 +41,8 @@ class ValidationResultTest {
 
     @Test
     fun `fromMany flattens errors from multiple validated results`() {
-        val e1 = ValidationError("field1", "bad")
-        val e2 = ValidationError("field2", "also bad")
+        val e1 = ValidationError(PropertyPath("field1"), "bad")
+        val e2 = ValidationError(PropertyPath("field2"), "also bad")
 
         val validatedList = listOf(
             Validated.Valid(Unit),
@@ -57,13 +57,13 @@ class ValidationResultTest {
 
     @Test
     fun `ValidationError code is null by default`() {
-        val error = ValidationError("email", "must not be blank")
+        val error = ValidationError(PropertyPath("email"), "must not be blank")
         assertNull(error.code)
     }
 
     @Test
     fun `ValidationError stores code when provided`() {
-        val error = ValidationError("email", "must not be blank", code = "email.blank")
+        val error = ValidationError(PropertyPath("email"), "must not be blank", code = "email.blank")
         error.assertMatches("email", "must not be blank", code = "email.blank")
     }
 

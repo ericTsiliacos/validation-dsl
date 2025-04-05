@@ -4,7 +4,7 @@ import validation.dsl.ValidationDsl
 import validation.extensions.andThen
 
 @ValidationDsl
-class RuleChainScope<T>(private val path: String) {
+class RuleChainScope<T>(private val path: PropertyPath) {
     private var currentRule: Rule<T>? = null
 
     fun rule(message: String, predicate: (T) -> Boolean) {

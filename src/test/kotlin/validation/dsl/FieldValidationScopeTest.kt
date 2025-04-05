@@ -10,7 +10,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `rule evaluates and reports errors`() {
-        val result = fieldScope("name", Profile(null, emptyList())) {
+        val result = fieldScope(PropertyPath("name"), Profile(null, emptyList())) {
             rule("Name must not be null") { it.name != null }
         }
 
@@ -21,9 +21,11 @@ class FieldValidationScopeTest {
 
     @Test
     fun `rule accepts Rule and validates correctly`() {
-        val notBlank = fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
+        val notBlank = fromPredicate<String>(
+            PropertyPath("username"), "must not be blank"
+        ) { it.isNotBlank() }
 
-        val result = fieldScope("username", "") {
+        val result = fieldScope(PropertyPath("username"), "") {
             rule(notBlank)
         }
 
@@ -34,7 +36,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `validate runs nested field validator`() {
-        val result = fieldScope("profile", Profile("", emptyList())) {
+        val result = fieldScope(PropertyPath("profile"), Profile("", emptyList())) {
             validate(Profile::name) {
                 rule("must not be blank") { !it.isNullOrBlank() }
             }
@@ -47,7 +49,9 @@ class FieldValidationScopeTest {
 
     @Test
     fun `validateEach runs validation for list items`() {
-        val result = fieldScope("profile", Profile("ok", listOf(Tag(""), Tag("ok"), Tag(" ")))) {
+        val result = fieldScope(
+            PropertyPath("profile"), Profile("ok", listOf(Tag(""), Tag("ok"), Tag(" ")))
+        ) {
             validateEach(Profile::tags) {
                 validate(Tag::value) {
                     rule("must not be blank") { it.isNotBlank() }
@@ -63,7 +67,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `andThen builds dependent rule chain`() {
-        val result = fieldScope("age", "18") {
+        val result = fieldScope(PropertyPath("age"), "18") {
             rule("must be numeric") { it.all(Char::isDigit) }
                 .andThen("must be at least 18") { it.toInt() >= 18 }
         }
@@ -73,7 +77,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `FieldValidationScope should combine rules by default`() {
-        val result = fieldScope("field", "BAD") {
+        val result = fieldScope(PropertyPath("field"), "BAD") {
             rule("must be lowercase") { it == it.lowercase() }
             rule("must be longer than 5") { it.length > 5 }
         }
@@ -86,7 +90,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `group accumulates nested rule errors`() {
-        val result = fieldScope("field", "") {
+        val result = fieldScope(PropertyPath("field"), "") {
             group("basic rules") {
                 rule("must not be blank") { it.isNotBlank() }
                 rule("must be lowercase") { it == it.lowercase() }
@@ -101,7 +105,7 @@ class FieldValidationScopeTest {
     @Test
     fun `group can wrap nested field validations`() {
         val profile = Profile("bob", listOf(Tag(""), Tag("ok")))
-        val result = fieldScope("profile", profile) {
+        val result = fieldScope(PropertyPath("profile"), profile) {
             group("tag validation") {
                 validateEach(Profile::tags) {
                     validate(Tag::value) {

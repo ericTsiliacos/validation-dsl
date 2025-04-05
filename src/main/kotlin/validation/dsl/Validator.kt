@@ -13,7 +13,7 @@ class Validator<T> {
     ) {
         validations += { target ->
             val value = prop.get(target)
-            FieldValidationScope(prop.name, { value }).apply(block).evaluate()
+            FieldValidationScope(PropertyPath(prop.name), { value }).apply(block).evaluate()
         }
     }
 
@@ -25,7 +25,7 @@ class Validator<T> {
             val list = prop.get(target)
             combineResults(
                 *list.mapIndexed { index, item ->
-                    val path = "${prop.name}[$index]"
+                    val path = PropertyPath(prop.name).index(index)
                     FieldValidationScope(path, { item }).apply(block).evaluate()
                 }.toTypedArray()
             ).toUnit()
@@ -34,4 +34,5 @@ class Validator<T> {
 
     fun validate(target: T): ValidationResult = validations.map { it(target) }
         .let(ValidationResult.Companion::fromMany)
+
 }

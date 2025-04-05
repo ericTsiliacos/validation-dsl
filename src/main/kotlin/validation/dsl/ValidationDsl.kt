@@ -32,7 +32,7 @@ fun <T> rule(
         Validated.Valid(Unit)
     } else {
         Validated.Invalid(
-            listOf(ValidationError(path = "", message = message, code = code, group = group))
+            listOf(ValidationError(path = PropertyPath.EMPTY, message = message, code = code, group = group))
         )
     }
 }
@@ -47,7 +47,7 @@ fun <T> predicate(
     check: (T) -> Boolean
 ): Rule<T> = { value ->
     if (check(value)) Validated.Valid(Unit)
-    else Validated.Invalid(listOf(ValidationError("", message, code, group)))
+    else Validated.Invalid(listOf(ValidationError(PropertyPath.EMPTY, message, code, group)))
 }
 
 /**
@@ -59,7 +59,7 @@ fun <T> FieldValidationScope<T>.rule(rule: Rule<T>) {
         val result = rule(value)
         if (result is Validated.Invalid) {
             Validated.Invalid(result.errors.map {
-                if (it.path.isBlank()) it.copy(path = path) else it
+                if (it.path == PropertyPath.EMPTY) it.copy(path = path) else it
             })
         } else result
     }
@@ -127,7 +127,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
     this.nested += {
         val parentList = this.getter()
         val results = parentList.mapIndexed { index, item ->
-            val itemPath = "${this.path}[$index]"
+            val itemPath = this.path.index(index)
             FieldValidationScope(itemPath) { item }.apply(block).evaluate()
         }
         combineResults(*results.toTypedArray()).toUnit()

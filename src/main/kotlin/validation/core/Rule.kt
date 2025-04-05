@@ -3,7 +3,7 @@ package validation.core
 typealias Rule<T> = (T) -> Validated<Unit>
 
 fun <T> fromPredicate(
-    path: String,
+    path: PropertyPath,
     message: String,
     code: String? = null,
     predicate: (T) -> Boolean
