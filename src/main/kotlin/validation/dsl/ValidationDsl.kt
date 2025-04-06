@@ -20,6 +20,40 @@ fun <T> validator(block: Validator<T>.() -> Unit): Validator<T> =
     Validator<T>().apply(block)
 
 /**
+ * Applies an existing [Validator] to the current field value.
+ *
+ * This is useful for delegating validation of nested types to reusable,
+ * modular validators — especially when they contain conditional logic or dependencies.
+ *
+ * Example:
+ * ```
+ * validate(User::profile) {
+ *     use(profileValidator(countryService))
+ * }
+ * ```
+ *
+ * All errors returned from the nested validator will be scoped to the current
+ * property path (e.g., `profile.bio`, `profile.birthday`).
+ *
+ * This can be composed with [whenNotNull], [group], and other DSL features.
+ *
+ * @param validator The validator to apply to the current field value
+ */
+@ValidationDsl
+fun <T> FieldValidationScope<T>.use(validator: Validator<T>) {
+    nested += {
+        when (val result = validator.validate(getter())) {
+            is ValidationResult.Valid -> Validated.Valid(Unit)
+            is ValidationResult.Invalid -> Validated.Invalid(
+                result.errors.map { error ->
+                    error.copy(path = path.child(error.path.toString()))
+                }
+            )
+        }
+    }
+}
+
+/**
  * Creates a reusable, path-agnostic validation rule.
  */
 fun <T> rule(

@@ -65,3 +65,14 @@ fun <T> ValidationResult<T>.assertInvalid(block: (List<ValidationError>) -> Unit
     }
 }
 
+fun ValidationResult<*>.assertError(path: String, message: String) {
+    val errors = when (this) {
+        is ValidationResult.Invalid<*> -> this.errors
+        else -> emptyList()
+    }
+
+    assertTrue(
+        "Expected error '$message' at '$path', but got: ${errors.map { it.path to it.message }}",
+        errors.any { it.path.toString() == path && it.message == message }
+    )
+}

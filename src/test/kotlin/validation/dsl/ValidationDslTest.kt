@@ -460,4 +460,116 @@ class ValidationDslTest {
         }
     }
 
+    @Test
+    fun `use should return valid when nested validator passes`() {
+        data class Profile(val bio: String)
+        data class User(val profile: Profile)
+
+        val profileValidator = validator {
+            validate(Profile::bio) {
+                rule("must not be blank") { it.isNotBlank() }
+            }
+        }
+
+        val userValidator = validator {
+            validate(User::profile) {
+                use(profileValidator)
+            }
+        }
+
+        val result = userValidator.validate(User(Profile("non-blank")))
+        assertTrue(result.isValid())
+    }
+
+    @Test
+    fun `use should return errors with nested path when validator fails`() {
+        data class Profile(val bio: String)
+        data class User(val profile: Profile)
+
+        val profileValidator = validator {
+            validate(Profile::bio) {
+                rule("must not be blank") { it.isBlank() } // fail deliberately
+            }
+        }
+
+        val userValidator = validator {
+            validate(User::profile) {
+                use(profileValidator)
+            }
+        }
+
+        val result = userValidator.validate(User(Profile("valid")))
+        result.assertError("profile.bio", "must not be blank")
+    }
+
+    @Test
+    fun `use should work with whenNotNull for nullable fields`() {
+        data class Profile(val bio: String)
+        data class User(val profile: Profile?)
+
+        val profileValidator = validator {
+            validate(Profile::bio) {
+                rule("must not be blank") { it.isBlank() }
+            }
+        }
+
+        val userValidator = validator {
+            validate(User::profile) {
+                whenNotNull {
+                    use(profileValidator)
+                }
+            }
+        }
+
+        val result = userValidator.validate(User(null))
+        assertTrue(result.isValid())
+    }
+
+    @Test
+    fun `use should work inside validateEach for lists of objects`() {
+        data class Address(val city: String)
+        data class User(val addresses: List<Address>)
+
+        val addressValidator = validator {
+            validate(Address::city) {
+                rule("must not be blank") { it.isNotBlank() }
+            }
+        }
+
+        val userValidator = validator {
+            validateEach(User::addresses) {
+                use(addressValidator)
+            }
+        }
+
+        val result = userValidator.validate(User(listOf(Address(""), Address("NY"))))
+        result.assertError("addresses[0].city", "must not be blank")
+    }
+
+    @Test
+    fun `use should preserve group label when used inside group block`() {
+        data class Profile(val bio: String)
+        data class User(val profile: Profile)
+
+        val profileValidator = validator {
+            validate(Profile::bio) {
+                rule("must not be blank") { it.isBlank() }
+            }
+        }
+
+        val userValidator = validator {
+            validate(User::profile) {
+                group("profile-checks") {
+                    use(profileValidator)
+                }
+            }
+        }
+
+        val result = userValidator.validate(User(Profile("ok")))
+        result.assertError("profile.bio", "must not be blank")
+
+        val group = (result as ValidationResult.Invalid).errors.first().group
+        assertEquals("profile-checks", group)
+    }
+
 }
