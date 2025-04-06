@@ -59,6 +59,48 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `rule with message, code, and group is preserved`() {
+        val result = fieldScope("field", "") {
+            rule(
+                message = "must not be blank",
+                code = "BLANK",
+                group = "basic"
+            ) { it.isNotBlank() }
+        }
+
+        result.assertInvalid { errors ->
+            val error = errors.first()
+            error.assertMatches("field", "must not be blank", code = "BLANK", group = "basic")
+        }
+    }
+
+    @Test
+    fun `top-level rule uses root path and preserves metadata`() {
+        val rule = rule<String>(
+            message = "forbidden value",
+            code = "FORBID",
+            group = "security"
+        ) { it == "unblocked" }
+
+        val result = rule("blocked")
+        assertTrue(result is Validated.Invalid)
+        result as Validated.Invalid
+        val error = result.errors.first()
+        error.assertMatches("", "forbidden value", code = "FORBID", group = "security")
+    }
+
+    @Test
+    fun `group passes through when no errors occur`() {
+        val result = fieldScope("field", "valid") {
+            group("label") {
+                rule("must be non-empty") { it.isNotEmpty() }
+            }
+        }
+
+        result.assertValid()
+    }
+
+    @Test
     fun `validator builds and runs validation`() {
         val v = validator {
             validate(User::name) {
