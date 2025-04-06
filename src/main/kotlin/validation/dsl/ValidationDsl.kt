@@ -42,7 +42,7 @@ fun <T> validator(block: Validator<T>.() -> Unit): Validator<T> =
 @ValidationDsl
 fun <T> FieldValidationScope<T>.use(validator: Validator<T>) {
     nested += {
-        when (val result = validator.validate(getter())) {
+        when (val result = validator.validate(root())) {
             is ValidationResult.Valid -> Validated.Valid(Unit)
             is ValidationResult.Invalid -> Validated.Invalid(
                 result.errors.map { error ->
@@ -136,7 +136,7 @@ fun <T : Any> FieldValidationScope<T?>.whenNotNull(
     block: FieldValidationScope<T>.() -> Unit
 ) {
     this.nested += {
-        val value = this.getter()
+        val value = this.root()
         if (value != null) {
             FieldValidationScope(this.path) { value }.apply(block).evaluate()
         } else {
@@ -164,7 +164,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
     block: FieldValidationScope<T>.() -> Unit
 ) {
     this.nested += {
-        val parentList = this.getter()
+        val parentList = this.root()
         val results = parentList.mapIndexed { index, item ->
             val itemPath = this.path.index(index)
             FieldValidationScope(itemPath) { item }.apply(block).evaluate()
@@ -228,7 +228,7 @@ fun <T> FieldValidationScope<T>.group(
     block: FieldValidationScope<T>.() -> Unit
 ) {
     this.nested += {
-        val scoped = FieldValidationScope(path, getter).apply(block).evaluate()
+        val scoped = FieldValidationScope(path, root).apply(block).evaluate()
         if (scoped is Validated.Invalid) {
             Validated.Invalid(scoped.errors.map { it.copy(group = label) })
         } else scoped

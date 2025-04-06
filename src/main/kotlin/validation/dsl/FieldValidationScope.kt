@@ -6,10 +6,12 @@ import kotlin.reflect.KProperty1
 @ValidationDsl
 class FieldValidationScope<R>(
     internal val path: PropertyPath,
-    internal val getter: () -> R
+    internal val root: () -> R
 ) {
     internal val rules = mutableListOf<Rule<R>>()
     internal val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
+
+    val value: R get() = root()
 
     fun rule(message: String, predicate: (R) -> Boolean) {
         val rule = fromPredicate(path = path, message = message, predicate = predicate)
@@ -22,7 +24,7 @@ class FieldValidationScope<R>(
     ) {
         val subPath = path.child(prop.name)
         nested += {
-            val value = prop.get(getter())
+            val value = prop.get(root())
             FieldValidationScope(subPath) { value }.apply(block).evaluate()
         }
     }
@@ -33,7 +35,7 @@ class FieldValidationScope<R>(
     ) {
         val listPath = path.child(prop.name)
         nested += {
-            val list = prop.get(getter())
+            val list = prop.get(root())
             val results = list.mapIndexed { index, item ->
                 val itemPath = listPath.index(index)
                 FieldValidationScope(itemPath) { item }.apply(block).evaluate()
@@ -43,7 +45,7 @@ class FieldValidationScope<R>(
     }
 
     fun evaluate(): Validated<Unit> {
-        val value = getter()
+        val value = root()
 
         val ruleResults = rules.map { it(value) }
         val nestedResults = nested.map { it() }
