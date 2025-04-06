@@ -32,6 +32,18 @@ fun <T> rule(
     else Validated.Invalid(listOf(ValidationError.root(message = message, code = code, group = group)))
 }
 
+@ValidationDsl
+fun <T : Any> FieldValidationScope<T?>.ruleIfPresent(
+    message: String,
+    code: String? = null,
+    group: String? = null,
+    predicate: (T) -> Boolean
+) {
+    whenNotNull {
+        rule(message, code, group, predicate)
+    }
+}
+
 /**
  * DSL entry point for defining reusable, path-agnostic rules.
  */

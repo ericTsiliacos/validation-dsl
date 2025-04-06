@@ -158,6 +158,32 @@ class ValidationDslTest {
     }
 
     @Test
+    fun `ruleIfPresent skips rule when value is null`() {
+        val validator = validator {
+            validate(User::name) {
+                ruleIfPresent("must be at least 3 chars") { it.length >= 3 }
+            }
+        }
+
+        val result = validator.validate(User(null, listOf()))
+        result.assertValid()
+    }
+
+    @Test
+    fun `ruleIfPresent applies rule when value is not null`() {
+        val validator = validator {
+            validate(User::name) {
+                ruleIfPresent("must be at least 3 chars") { it.length >= 3 }
+            }
+        }
+
+        val result = validator.validate(User("ab", listOf()))
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("name", "must be at least 3 chars")
+        }
+    }
+
+    @Test
     fun `dependent inside whenNotNull short-circuits if first rule fails`() {
         val result = fieldScope("field", "ABC" as String?) {
             whenNotNull {
