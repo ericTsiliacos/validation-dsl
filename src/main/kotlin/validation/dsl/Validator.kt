@@ -32,7 +32,13 @@ class Validator<T> {
         }
     }
 
-    fun validate(target: T): ValidationResult = validations.map { it(target) }
-        .let(ValidationResult.Companion::fromMany)
+    fun validate(target: T): ValidationResult<T> = validations.map { it(target) }
+        .flatMap {
+            when (it) {
+                is Validated.Valid -> emptyList()
+                is Validated.Invalid -> it.errors
+            }
+        }
+        .let { ValidationResult.from(target, it) }
 
 }

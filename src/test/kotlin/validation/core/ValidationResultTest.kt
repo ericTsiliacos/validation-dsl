@@ -7,14 +7,17 @@ class ValidationResultTest {
 
     @Test
     fun `ValidationResult isValid returns true when no errors`() {
-        val result = ValidationResult(emptyList())
-        assertTrue(result.isValid)
+        val result = ValidationResult.from("value", emptyList())
+        assertTrue(result.isValid())
+        assertEquals("value", result.getOrNull())
     }
 
     @Test
     fun `ValidationResult isValid returns false when there are errors`() {
-        val result = ValidationResult(listOf(ValidationError(PropertyPath("field"), "must not be blank")))
-        assertFalse(result.isValid)
+        val error = ValidationError(PropertyPath("field"), "must not be blank")
+        val result = ValidationResult.from("value", listOf(error))
+        assertFalse(result.isValid())
+        assertEquals(listOf(error), (result as ValidationResult.Invalid).errors)
     }
 
     @Test
@@ -34,9 +37,17 @@ class ValidationResultTest {
             Validated.Invalid(listOf(e2))
         )
 
-        val result = ValidationResult.fromMany(validatedList)
-        assertFalse(result.isValid)
-        assertEquals(listOf(e1, e2), result.errors)
+        val errors = validatedList.flatMap {
+            when (it) {
+                is Validated.Valid -> emptyList()
+                is Validated.Invalid -> it.errors
+            }
+        }
+
+        val result = ValidationResult.fromMany(errors)
+
+        assertFalse(result.isValid())
+        assertEquals(listOf(e1, e2), (result as ValidationResult.Invalid).errors)
     }
 
     @Test
@@ -49,6 +60,61 @@ class ValidationResultTest {
     fun `ValidationError stores code when provided`() {
         val error = ValidationError(PropertyPath("email"), "must not be blank", code = "email.blank")
         error.assertMatches("email", "must not be blank", code = "email.blank")
+    }
+
+    @Test
+    fun `ValidationResult map transforms value when valid`() {
+        val result = ValidationResult.Valid("foo")
+        val mapped = result.map { it.uppercase() }
+        assertEquals("FOO", mapped.getOrNull())
+    }
+
+    @Test
+    fun `ValidationResult flatMap chains valid results`() {
+        val result = ValidationResult.Valid("foo")
+        val mapped = result.flatMap { ValidationResult.Valid(it.length) }
+        assertEquals(3, mapped.getOrNull())
+    }
+
+    @Test
+    fun `ValidationResult flatMap does not run when invalid`() {
+        val error = ValidationError(PropertyPath("x"), "bad")
+        val result = ValidationResult.from("x", listOf(error))
+        val mapped = result.flatMap { ValidationResult.Valid(it.length) }
+        assertTrue(mapped is ValidationResult.Invalid)
+        assertEquals(listOf(error), (mapped as ValidationResult.Invalid).errors)
+    }
+
+    @Test
+    fun `getOrElse returns value when valid`() {
+        val result = ValidationResult.Valid("actual")
+        val value = result.getOrElse { "default" }
+        assertEquals("actual", value)
+    }
+
+    @Test
+    fun `getOrElse returns default when invalid`() {
+        val error = ValidationError(PropertyPath("x"), "bad")
+        val result = ValidationResult.from("ignored", listOf(error))
+        val value = result.getOrElse { "default" }
+        assertEquals("default", value)
+    }
+
+    @Test
+    fun `onValid executes block when valid`() {
+        var captured: String? = null
+        val result = ValidationResult.Valid("run this")
+        result.onValid { captured = it }
+        assertEquals("run this", captured)
+    }
+
+    @Test
+    fun `onValid does not execute block when invalid`() {
+        var wasCalled = false
+        val error = ValidationError(PropertyPath("x"), "bad")
+        val result = ValidationResult.from("input", listOf(error))
+        result.onValid { wasCalled = true }
+        assertFalse(wasCalled)
     }
 
 }

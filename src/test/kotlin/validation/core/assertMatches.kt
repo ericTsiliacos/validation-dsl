@@ -49,14 +49,19 @@ fun <T> fieldScope(path: PropertyPath, value: T, block: FieldValidationScope<T>.
     return scope.evaluate()
 }
 
-fun ValidationResult.toValidated(): Validated<Unit> =
-    if (isValid) Validated.Valid(Unit) else Validated.Invalid(errors)
-
-fun ValidationResult.assertValid() {
-    assertTrue(this.isValid)
+fun <T> ValidationResult<T>.toValidated(): Validated<Unit> = when (this) {
+    is ValidationResult.Valid -> Validated.Valid(Unit)
+    is ValidationResult.Invalid -> Validated.Invalid(errors)
 }
 
-fun ValidationResult.assertInvalid(block: (List<ValidationError>) -> Unit) {
-    assertFalse(this.isValid)
-    block(this.errors)
+fun <T> ValidationResult<T>.assertValid() {
+    assertTrue("Expected result to be Valid, but was Invalid", this is ValidationResult.Valid)
 }
+
+fun <T> ValidationResult<T>.assertInvalid(block: (List<ValidationError>) -> Unit) {
+    assertTrue("Expected result to be Invalid, but was Valid", this is ValidationResult.Invalid)
+    if (this is ValidationResult.Invalid) {
+        block(errors)
+    }
+}
+
