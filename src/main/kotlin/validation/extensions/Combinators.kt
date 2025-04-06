@@ -21,26 +21,6 @@ infix fun <T> Rule<T>.andThen(next: Rule<T>): Rule<T> = { value ->
 }
 
 /**
- * Composes two rules and evaluates them independently.
- *
- * Both rules are executed regardless of whether the first one passes or fails,
- * and any resulting errors are combined.
- *
- * Example:
- * ```kotlin
- * val notBlank = fromPredicate("username", "must not be blank") { it.isNotBlank() }
- * val isLowercase = fromPredicate("username", "must be lowercase") { it == it.lowercase() }
- *
- * val combined = notBlank combine isLowercase
- * ```
- */
-infix fun <T> Rule<T>.combine(other: Rule<T>): Rule<T> = { value ->
-    val r1 = this(value)
-    val r2 = other(value)
-    combineResults(r1, r2).map { }
-}
-
-/**
  * Wraps an existing rule function that returns a [Validated] result.
  *
  * Useful for composing or adapting low-level rule logic into the standard [Rule] type.

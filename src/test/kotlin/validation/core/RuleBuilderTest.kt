@@ -2,7 +2,6 @@ package validation.core
 
 import org.testng.annotations.Test
 import validation.extensions.andThen
-import validation.extensions.combine
 
 class RuleBuilderTest {
 
@@ -39,24 +38,6 @@ class RuleBuilderTest {
 
         chained("17").assertInvalid { errors ->
             errors[0].assertMatches("age", "must be >= 18")
-        }
-    }
-
-    @Test
-    fun `combine applies both rules and accumulates errors`() {
-        val r1 = fromPredicate<String>(
-            PropertyPath("username"), "must be longer than 3"
-        ) { it.length > 3 }
-
-        val r2 = fromPredicate<String>(
-            PropertyPath("username"), "must be lowercase"
-        ) { it == it.lowercase() }
-
-        val combined = r1 combine r2
-
-        combined("A").assertInvalid { errors ->
-            errors[0].assertMatches("username", "must be longer than 3")
-            errors[1].assertMatches("username", "must be lowercase")
         }
     }
 

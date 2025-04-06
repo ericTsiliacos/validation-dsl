@@ -1,6 +1,5 @@
 package validation.extensions
 
-import org.testng.AssertJUnit
 import org.testng.annotations.Test
 import validation.core.*
 
@@ -27,24 +26,6 @@ class CombinatorsTest {
 
         combined("Hello").assertInvalid { errors ->
             errors[0].assertMatches("x", "must be lowercase")
-        }
-    }
-
-    @Test
-    fun `combine accumulates both errors`() {
-        val rule1 = fromPredicate<String>(PropertyPath("x"), "must be longer than 3") { it.length > 3 }
-        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
-
-        val combined = rule1 combine rule2
-
-        combined("Hello").assertInvalid { errors ->
-            AssertJUnit.assertEquals(1, errors.size)
-            errors[0].assertMatches("x", "must be lowercase")
-        }
-
-        combined("A").assertInvalid { errors ->
-            errors[0].assertMatches("x", "must be longer than 3")
-            errors[1].assertMatches("x", "must be lowercase")
         }
     }
 
