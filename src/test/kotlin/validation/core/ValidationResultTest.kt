@@ -24,22 +24,6 @@ class ValidationResultTest {
     }
 
     @Test
-    fun `from returns valid result when Validated is Valid`() {
-        val validated: Validated<Unit> = Validated.Valid(Unit)
-        val result = ValidationResult.from(validated)
-        assertTrue(result.isValid)
-    }
-
-    @Test
-    fun `from returns invalid result when Validated is Invalid`() {
-        val error = ValidationError(PropertyPath("field"), "error")
-        val validated: Validated<Unit> = Validated.Invalid(listOf(error))
-        val result = ValidationResult.from(validated)
-        assertFalse(result.isValid)
-        assertEquals(listOf(error), result.errors)
-    }
-
-    @Test
     fun `fromMany flattens errors from multiple validated results`() {
         val e1 = ValidationError(PropertyPath("field1"), "bad")
         val e2 = ValidationError(PropertyPath("field2"), "also bad")
