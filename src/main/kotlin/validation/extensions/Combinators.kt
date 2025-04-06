@@ -26,3 +26,30 @@ infix fun <T> Rule<T>.andThen(next: Rule<T>): Rule<T> = { value ->
  * Useful for composing or adapting low-level rule logic into the standard [Rule] type.
  */
 fun <T> fromFunction(rule: (T) -> Validated<Unit>): Rule<T> = rule
+
+infix fun <T> Rule<T>.and(other: Rule<T>): Rule<T> = { value ->
+    val first = this(value)
+    val second = other(value)
+
+    when {
+        first is Validated.Valid && second is Validated.Valid ->
+            Validated.Valid(Unit)
+        first is Validated.Invalid && second is Validated.Invalid ->
+            Validated.Invalid(first.errors + second.errors)
+        first is Validated.Invalid -> first
+        else -> second
+    }
+}
+
+fun <T> Rule<T>.isForbidden(
+    message: String,
+    code: String? = null,
+    group: String? = null
+): Rule<T> = { value ->
+    when (this(value)) {
+        is Validated.Valid -> Validated.Invalid(
+            listOf(ValidationError(PropertyPath.EMPTY, message, code, group))
+        )
+        is Validated.Invalid -> Validated.Valid(Unit)
+    }
+}
