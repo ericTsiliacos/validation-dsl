@@ -66,16 +66,6 @@ class FieldValidationScopeTest {
     }
 
     @Test
-    fun `andThen builds dependent rule chain`() {
-        val result = fieldScope(PropertyPath("age"), "18") {
-            rule("must be numeric") { it.all(Char::isDigit) }
-                .andThen("must be at least 18") { it.toInt() >= 18 }
-        }
-
-        result.assertValid()
-    }
-
-    @Test
     fun `FieldValidationScope should combine rules by default`() {
         val result = fieldScope(PropertyPath("field"), "BAD") {
             rule("must be lowercase") { it == it.lowercase() }

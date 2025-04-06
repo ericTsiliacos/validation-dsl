@@ -5,6 +5,7 @@ value class PropertyPath(private val segments: List<String>) {
 
     companion object {
         val EMPTY = PropertyPath(emptyList())
+        fun root() = EMPTY
     }
 
     constructor(root: String) : this(listOf(root))

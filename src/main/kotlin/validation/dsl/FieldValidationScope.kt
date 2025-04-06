@@ -11,10 +11,9 @@ class FieldValidationScope<R>(
     internal val rules = mutableListOf<Rule<R>>()
     internal val nested: MutableList<() -> Validated<Unit>> = mutableListOf()
 
-    fun rule(message: String, predicate: (R) -> Boolean): RuleBuilder<R> {
+    fun rule(message: String, predicate: (R) -> Boolean) {
         val rule = fromPredicate(path = path, message = message, predicate = predicate)
         rules += rule
-        return RuleBuilder(rule)
     }
 
     fun <E> validate(

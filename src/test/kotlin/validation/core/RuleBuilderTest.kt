@@ -41,14 +41,5 @@ class RuleBuilderTest {
         }
     }
 
-    @Test
-    fun `build returns composed rule`() {
-        val builder = RuleBuilder(
-            fromPredicate<String>(PropertyPath("x"), "must be number") { it.all(Char::isDigit) }
-        ).andThen("must be 3 chars") { it.length == 3 }
-
-        val built = builder.build()
-        built("123").assertValid()
-    }
 
 }
