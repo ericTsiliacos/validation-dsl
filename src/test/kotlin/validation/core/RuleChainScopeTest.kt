@@ -2,6 +2,7 @@ package validation.core
 
 import org.testng.Assert.assertNull
 import org.testng.annotations.Test
+import validation.dsl.dependent
 
 class RuleChainScopeTest {
 
@@ -59,6 +60,20 @@ class RuleChainScopeTest {
         val rule = scope.build()
         requireNotNull(rule)
         rule("valid").assertValid()
+    }
+
+    @Test
+    fun `RuleChainScope chains multiple rules with andThen`() {
+        val result = fieldScope(PropertyPath("field"), "ABC") {
+            dependent {
+                rule("must be lowercase") { it == it.lowercase() }
+                rule("must start with a") { it.startsWith("a") }
+            }
+        }
+
+        result.assertInvalid { errors ->
+            errors[0].assertMatches("field", "must be lowercase")
+        }
     }
 
 }
