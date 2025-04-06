@@ -28,13 +28,8 @@ fun <T> rule(
     group: String? = null,
     predicate: (T) -> Boolean
 ): Rule<T> = { value ->
-    if (predicate(value)) {
-        Validated.Valid(Unit)
-    } else {
-        Validated.Invalid(
-            listOf(ValidationError(path = PropertyPath.root(), message = message, code = code, group = group))
-        )
-    }
+    if (predicate(value)) Validated.Valid(Unit)
+    else Validated.Invalid(listOf(ValidationError.root(message = message, code = code, group = group)))
 }
 
 /**
@@ -45,10 +40,7 @@ fun <T> predicate(
     code: String? = null,
     group: String? = null,
     check: (T) -> Boolean
-): Rule<T> = { value ->
-    if (check(value)) Validated.Valid(Unit)
-    else Validated.Invalid(listOf(ValidationError(PropertyPath.root(), message, code, group)))
-}
+): Rule<T> = rule(message, code, group, check)
 
 /**
  * Injects current path into reusable predicate.
@@ -56,12 +48,13 @@ fun <T> predicate(
 @ValidationDsl
 fun <T> FieldValidationScope<T>.rule(rule: Rule<T>) {
     val wrapped: Rule<T> = { value ->
-        val result = rule(value)
-        if (result is Validated.Invalid) {
-            Validated.Invalid(result.errors.map {
-                if (it.path == PropertyPath.root()) it.copy(path = path) else it
-            })
-        } else result
+        when (val result = rule(value)) {
+            is Validated.Valid -> result
+            is Validated.Invalid -> {
+                val updatedErrors = result.errors.map { it.copy(path = path) }
+                Validated.Invalid(updatedErrors)
+            }
+        }.toUnit()
     }
     this.rules += wrapped
 }
@@ -74,7 +67,7 @@ fun <T> FieldValidationScope<T>.rule(
     message: String,
     code: String? = null,
     group: String? = null,
-    check: Function1<T, Boolean>
+    check: (T) -> Boolean
 ) {
     val predicate = predicate(message, code, group, check)
     rule(predicate)
