@@ -488,7 +488,7 @@ class ValidationDslTest {
 
         val profileValidator = validator {
             validate(Profile::bio) {
-                rule("must not be blank") { it.isBlank() } // fail deliberately
+                rule("must not be blank") { it.isBlank() }
             }
         }
 
@@ -600,7 +600,6 @@ class ValidationDslTest {
 
         val leafValidator = validator<Leaf> {
             root {
-                // add rule without path injection so it retains PropertyPath.EMPTY
                 this.rules += rule<Leaf>("bad") { false }
             }
         }
