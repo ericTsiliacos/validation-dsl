@@ -7,6 +7,13 @@ import kotlin.reflect.KProperty1
 class Validator<T> {
     private val validations = mutableListOf<(T) -> Validated<Unit>>()
 
+    @ValidationDsl
+    fun root(block: FieldValidationScope<T>.() -> Unit) {
+        validations += { target ->
+            FieldValidationScope(PropertyPath.EMPTY) { target }.apply(block).evaluate()
+        }
+    }
+
     fun <R> validate(
         prop: KProperty1<T, R>,
         block: FieldValidationScope<R>.() -> Unit
