@@ -90,7 +90,7 @@ validate(User::nickname) {
 ## 🛠️ Custom Reusable Rules
 
 ```kotlin
-val notBlank = Rules.fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
+val notBlank = fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
 
 validate(User::username) {
     rule(notBlank)
@@ -101,11 +101,11 @@ validate(User::username) {
 
 ## 🎯 Composing Rules
 
-Use `combine` for parallel evaluation, or `andThen` for dependent chaining:
+Use `and` for parallel evaluation, or `andThen` for dependent chaining:
 
 ```kotlin
-val numeric = Rules.fromPredicate<String>("age", "must be numeric") { it.all(Char::isDigit) }
-val over18 = Rules.fromPredicate<String>("age", "must be ≥ 18") { it.toInt() >= 18 }
+val numeric = fromPredicate<String>("age", "must be numeric") { it.all(Char::isDigit) }
+val over18 = fromPredicate<String>("age", "must be ≥ 18") { it.toInt() >= 18 }
 
 val ageRule = numeric andThen over18
 
@@ -137,7 +137,7 @@ if (result.isValid) {
 All validations yield `Validated<Unit>` underneath, enabling composition, unit tests, and error aggregation:
 
 ```kotlin
-val rule: Rule<String> = Rules.fromPredicate("name", "must not be blank") { it.isNotBlank() }
+val rule: Rule<String> = fromPredicate("name", "must not be blank") { it.isNotBlank() }
 
 assertEquals(Validated.Valid(Unit), rule("valid"))
 assertTrue(rule("") is Validated.Invalid)
@@ -182,7 +182,7 @@ for (error in result.errors) {
 You can associate machine-readable error `code`s with your rules, enabling flexible localization or internationalization strategies.
 
 ```kotlin
-val emailRule = Rules.fromPredicate("email", "invalid email", code = "invalid_email") {
+val emailRule = fromPredicate("email", "invalid email", code = "invalid_email") {
     it.contains("@")
 }
 
