@@ -46,7 +46,12 @@ fun <T> FieldValidationScope<T>.use(validator: Validator<T>) {
             is ValidationResult.Valid -> Validated.Valid(Unit)
             is ValidationResult.Invalid -> Validated.Invalid(
                 result.errors.map { error ->
-                    error.copy(path = path.child(error.path.toString()))
+                    val updatedPath = if (error.path == PropertyPath.EMPTY) {
+                        path
+                    } else {
+                        path.child(error.path.toString())
+                    }
+                    error.copy(path = updatedPath)
                 }
             )
         }

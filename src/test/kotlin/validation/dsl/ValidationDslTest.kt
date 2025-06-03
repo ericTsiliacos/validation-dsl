@@ -572,4 +572,25 @@ class ValidationDslTest {
         assertEquals("profile-checks", group)
     }
 
+    @Test
+    fun `use should handle root path errors`() {
+        data class Leaf(val value: String)
+        data class Wrapper(val leaf: Leaf)
+
+        val leafValidator = validator<Leaf> {
+            root {
+                rule("bad") { false }
+            }
+        }
+
+        val wrapperValidator = validator {
+            validate(Wrapper::leaf) {
+                use(leafValidator)
+            }
+        }
+
+        val result = wrapperValidator.validate(Wrapper(Leaf("x")))
+        result.assertError("leaf", "bad")
+    }
+
 }
