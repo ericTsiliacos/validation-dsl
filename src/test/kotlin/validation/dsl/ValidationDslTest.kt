@@ -593,4 +593,26 @@ class ValidationDslTest {
         result.assertError("leaf", "bad")
     }
 
+    @Test
+    fun `use should map empty nested error path to parent`() {
+        data class Leaf(val value: String)
+        data class Wrapper(val leaf: Leaf)
+
+        val leafValidator = validator<Leaf> {
+            root {
+                // add rule without path injection so it retains PropertyPath.EMPTY
+                this.rules += rule<Leaf>("bad") { false }
+            }
+        }
+
+        val wrapperValidator = validator {
+            validate(Wrapper::leaf) {
+                use(leafValidator)
+            }
+        }
+
+        val result = wrapperValidator.validate(Wrapper(Leaf("x")))
+        result.assertError("leaf", "bad")
+    }
+
 }
