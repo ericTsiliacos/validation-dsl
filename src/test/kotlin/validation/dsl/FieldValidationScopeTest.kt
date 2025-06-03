@@ -66,7 +66,7 @@ class FieldValidationScopeTest {
     }
 
     @Test
-    fun `FieldValidationScope should combine rules by default`() {
+    fun `FieldValidationScope should apply rules with and by default`() {
         val result = fieldScope(PropertyPath("field"), "BAD") {
             rule("must be lowercase") { it == it.lowercase() }
             rule("must be longer than 5") { it.length > 5 }
