@@ -211,7 +211,7 @@ You can use this to:
 ## 📦 Publishing
 
 This library is lightweight and designed for easy reuse.  
-You can include it in your own projects or publish it to Maven Central / Jitpack.
+You can include it in your own projects or publish it to Maven Central / JitPack.
 
 ---
 
