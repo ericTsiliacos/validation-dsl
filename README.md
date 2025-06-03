@@ -27,7 +27,7 @@ Perfect for validating nested data structures with readable, declarative syntax.
 
 ```kotlin
 data class User(val name: String, val tags: List<Tag>)
-data class Tag(val value: String)
+data class Tag(val value: Int)
 
 val validator = validator<User> {
     validate(User::name) {
@@ -36,12 +36,12 @@ val validator = validator<User> {
 
     validateEach(User::tags) {
         validate(Tag::value) {
-            rule("must not be blank") { it.isNotBlank() }
+            rule("must not be negative") { it >= 0 }
         }
     }
 }
 
-val result = validator.validate(User(name = "", tags = listOf(Tag("ok"), Tag(""))))
+val result = validator.validate(User(name = "", tags = listOf(Tag(-1), Tag(-1))))
 
 if (!result.isValid) {
     result.errors.forEach {
