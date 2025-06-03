@@ -11,13 +11,15 @@ Perfect for validating nested data structures with readable, declarative syntax.
 
 ## 🌟 Features
 
-- Intuitive DSL for nested validation
-- Composable and reusable rules
-- List and nullable field support
+- Intuitive DSL for nested and list validation
+- Root level & cross-field checks
+- Reusable rules and powerful combinators
+- Nullable field helpers and optional rules
 - Dependent rule chaining (short-circuiting)
-- Functional-style Validated/Invalid result types
-- Fully testable and side-effect free
-- Zero dependencies
+- Reuse validators with `use`
+- Group labels & error codes for i18n
+- Functional-style result types
+- Zero dependencies and fully testable
 
 ---
 
@@ -44,6 +46,20 @@ val result = validator.validate(User(name = "", tags = listOf(Tag("ok"), Tag("")
 if (!result.isValid) {
     result.errors.forEach {
         println("${it.path}: ${it.message}")
+    }
+}
+```
+
+---
+
+## 🌱 Root Level Validation
+
+Validate the entire object when you need cross-field checks:
+
+```kotlin
+val orderValidator = validator<Order> {
+    root {
+        rule("total must match sum") { it.total == it.items.sumOf { i -> i.price } }
     }
 }
 ```
@@ -85,6 +101,14 @@ validate(User::nickname) {
 }
 ```
 
+You can also run a rule **only when the value is present** using `ruleIfPresent`:
+
+```kotlin
+validate(User::nickname) {
+    ruleIfPresent("must be at least 3 chars") { it.length >= 3 }
+}
+```
+
 ---
 
 ## 🛠️ Custom Reusable Rules
@@ -94,6 +118,22 @@ val notBlank = fromPredicate<String>("username", "must not be blank") { it.isNot
 
 validate(User::username) {
     rule(notBlank)
+}
+```
+
+---
+
+## ♻️ Reusing Validators
+
+Delegate validation of nested objects to standalone validators:
+
+```kotlin
+val tagValidator = validator<Tag> {
+    validate(Tag::value) { rule("must not be blank") { it.isNotBlank() } }
+}
+
+val userValidator = validator<User> {
+    validateEach(User::tags) { use(tagValidator) }
 }
 ```
 
@@ -112,6 +152,14 @@ val ageRule = numeric andThen over18
 validate(User::age) {
     rule(ageRule)
 }
+```
+
+Other helpers include `isForbidden` to invert a rule and `fromFunction` to adapt
+existing checks:
+
+```kotlin
+val onlyRed = fromPredicate(PropertyPath("color"), "must be red") { it == "red" }
+val noRed = onlyRed.isForbidden("red not allowed")
 ```
 
 ---
