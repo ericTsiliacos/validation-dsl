@@ -70,6 +70,17 @@ class ValidationResultTest {
     }
 
     @Test
+    fun `ValidationResult map does not run when invalid`() {
+        val error = ValidationError(PropertyPath("x"), "bad")
+        val result = ValidationResult.from("ignored", listOf(error))
+        var called = false
+        val mapped = result.map { called = true; it.length }
+        assertFalse(called)
+        assertTrue(mapped is ValidationResult.Invalid)
+        assertEquals(listOf(error), (mapped as ValidationResult.Invalid).errors)
+    }
+
+    @Test
     fun `ValidationResult flatMap chains valid results`() {
         val result = ValidationResult.Valid("foo")
         val mapped = result.flatMap { ValidationResult.Valid(it.length) }
