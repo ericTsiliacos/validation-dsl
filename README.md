@@ -256,6 +256,66 @@ You can use this to:
 
 ---
 
+## 🏗️ Mini Tutorial
+
+The following example shows how to build a small validation module for a registration form. It demonstrates custom reusable rules, grouping for i18n, and composing validators.
+
+```kotlin
+data class Address(val street: String, val city: String, val zip: String)
+data class Registration(
+    val username: String,
+    val email: String,
+    val password: String,
+    val address: Address
+)
+
+// reusable rule with an error code
+val strongPassword = fromPredicate(
+    "password",
+    "must be at least 8 chars and contain a digit",
+    code = "weak_password"
+) {
+    it.length >= 8 && it.any(Char::isDigit)
+}
+
+// group all address checks under the "address" label
+val addressValidator = validator<Address> {
+    group("address") {
+        validate(Address::street) { rule("required") { it.isNotBlank() } }
+        validate(Address::zip) {
+            rule("invalid zip", code = "invalid_zip") { it.all(Char::isDigit) }
+        }
+    }
+}
+
+// compose the registration validator
+val registrationValidator = validator<Registration> {
+    validate(Registration::username) { rule("must not be blank") { it.isNotBlank() } }
+    validate(Registration::password) { rule(strongPassword) }
+    validate(Registration::address) { use(addressValidator) }
+}
+
+val result = registrationValidator.validate(
+    Registration("js", "john@example.com", "pass", Address("", "", "ABCD"))
+)
+
+for (error in result.errors) {
+    println("[${error.group}] ${error.path}: ${error.message} (${error.code})")
+}
+```
+
+This prints something like:
+
+```
+[address] street: required (null)
+[address] zip: invalid zip (invalid_zip)
+password: must be at least 8 chars and contain a digit (weak_password)
+```
+
+The snippet illustrates how to define custom rules with codes, group related validations, and compose validators for nested structures.
+
+---
+
 ## 📦 Publishing
 
 This library is lightweight and designed for easy reuse.  
