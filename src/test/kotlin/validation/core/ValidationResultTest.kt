@@ -117,4 +117,31 @@ class ValidationResultTest {
         assertFalse(wasCalled)
     }
 
+    @Test
+    fun `ValidationError root helper builds error with empty path`() {
+        val error = ValidationError.root("boom", code = "C", group = "g")
+        assertEquals(PropertyPath.root(), error.path)
+        assertEquals("boom", error.message)
+        assertEquals("C", error.code)
+        assertEquals("g", error.group)
+    }
+
+    @Test
+    fun `ValidationResult isInvalid reports true for invalid result`() {
+        val error = ValidationError(PropertyPath("field"), "bad")
+        val result = ValidationResult.from("x", listOf(error))
+        assertTrue(result.isInvalid())
+        assertFalse(result.isValid())
+    }
+
+    @Test
+    fun `onInvalid executes block when result is invalid`() {
+        val error = ValidationError(PropertyPath("f"), "bad")
+        val result = ValidationResult.from("x", listOf(error))
+        var captured: List<ValidationError>? = null
+        val returned = result.onInvalid { captured = it }
+        assertSame(result, returned)
+        assertEquals(listOf(error), captured)
+    }
+
 }
