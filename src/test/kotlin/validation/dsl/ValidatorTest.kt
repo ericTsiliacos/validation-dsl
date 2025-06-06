@@ -4,6 +4,9 @@ import org.testng.AssertJUnit.assertEquals
 import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
 import validation.core.*
+import validation.dsl.builder.Validator
+import validation.dsl.builder.validator
+import validation.dsl.scopes.rule
 
 class ValidatorTest {
 

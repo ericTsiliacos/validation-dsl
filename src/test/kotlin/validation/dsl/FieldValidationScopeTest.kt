@@ -2,6 +2,9 @@ package validation.dsl
 
 import org.testng.annotations.Test
 import validation.core.*
+import validation.dsl.scopes.FieldValidationScope
+import validation.dsl.scopes.rule
+import validation.dsl.grouping.group
 
 class FieldValidationScopeTest {
 

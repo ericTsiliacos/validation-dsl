@@ -1,7 +1,7 @@
 package validation.core
 
 import validation.dsl.ValidationDsl
-import validation.extensions.andThen
+import validation.rules.andThen
 
 @ValidationDsl
 class RuleChainScope<T>(private val path: PropertyPath) {

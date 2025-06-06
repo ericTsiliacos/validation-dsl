@@ -1,7 +1,14 @@
-package validation.dsl
+package validation.dsl.builder
 
+import validation.dsl.scopes.FieldValidationScope
 import validation.core.*
 import kotlin.reflect.KProperty1
+
+/**
+ * Entry point for creating a [Validator] using a fluent DSL.
+ */
+fun <T> validator(block: Validator<T>.() -> Unit): Validator<T> =
+    Validator<T>().apply(block)
 
 @ValidationDsl
 class Validator<T> {
@@ -48,4 +55,23 @@ class Validator<T> {
         }
         .let { ValidationResult.from(target, it) }
 
+}
+
+@ValidationDsl
+fun <T> FieldValidationScope<T>.use(validator: Validator<T>) {
+    nested += {
+        when (val result = validator.validate(root())) {
+            is ValidationResult.Valid -> Validated.Valid(Unit)
+            is ValidationResult.Invalid -> Validated.Invalid(
+                result.errors.map { error ->
+                    val updatedPath = if (error.path == PropertyPath.EMPTY) {
+                        path
+                    } else {
+                        path.child(error.path.toString())
+                    }
+                    error.copy(path = updatedPath)
+                }
+            )
+        }
+    }
 }

@@ -4,6 +4,15 @@ import org.testng.AssertJUnit.assertEquals
 import org.testng.AssertJUnit.assertTrue
 import org.testng.annotations.Test
 import validation.core.*
+import validation.dsl.builder.Validator
+import validation.dsl.builder.validator
+import validation.dsl.scopes.FieldValidationScope
+import validation.dsl.scopes.rule
+import validation.dsl.scopes.predicate
+import validation.dsl.grouping.group
+import validation.dsl.nullable.whenNotNull
+import validation.dsl.nullable.ruleIfPresent
+import validation.dsl.collection.validateEach
 
 class ValidationDslTest {
 

@@ -1,4 +1,4 @@
-package validation.dsl
+package validation.dsl.scopes
 
 import validation.core.*
 import kotlin.reflect.KProperty1

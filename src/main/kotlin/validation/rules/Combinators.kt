@@ -1,4 +1,4 @@
-package validation.extensions
+package validation.rules
 
 import validation.core.*
 

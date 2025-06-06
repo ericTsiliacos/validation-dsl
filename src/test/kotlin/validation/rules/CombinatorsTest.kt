@@ -1,4 +1,4 @@
-package validation.extensions
+package validation.rules
 
 import org.testng.AssertJUnit.*
 import org.testng.annotations.Test

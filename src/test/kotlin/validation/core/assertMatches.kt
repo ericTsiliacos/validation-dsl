@@ -1,7 +1,7 @@
 package validation.core
 
 import org.testng.AssertJUnit.*
-import validation.dsl.FieldValidationScope
+import validation.dsl.scopes.FieldValidationScope
 
 fun ValidationError.assertMatches(
     path: PropertyPath,

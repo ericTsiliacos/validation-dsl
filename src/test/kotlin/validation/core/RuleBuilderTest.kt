@@ -1,7 +1,7 @@
 package validation.core
 
 import org.testng.annotations.Test
-import validation.extensions.andThen
+import validation.rules.andThen
 
 class RuleBuilderTest {
 
