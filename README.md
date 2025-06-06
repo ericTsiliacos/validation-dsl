@@ -114,7 +114,7 @@ validate(User::nickname) {
 ## 🛠️ Custom Reusable Rules
 
 ```kotlin
-val notBlank = fromPredicate<String>("username", "must not be blank") { it.isNotBlank() }
+val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
 
 validate(User::username) {
     rule(notBlank)
@@ -144,8 +144,8 @@ val userValidator = validator<User> {
 Use `and` for parallel evaluation, or `andThen` for dependent chaining:
 
 ```kotlin
-val numeric = fromPredicate<String>("age", "must be numeric") { it.all(Char::isDigit) }
-val over18 = fromPredicate<String>("age", "must be ≥ 18") { it.toInt() >= 18 }
+val numeric = predicate<String>("must be numeric") { it.all(Char::isDigit) }
+val over18 = predicate<String>("must be ≥ 18") { it.toInt() >= 18 }
 
 val ageRule = numeric andThen over18
 
@@ -158,7 +158,7 @@ Other helpers include `isForbidden` to invert a rule and `fromFunction` to adapt
 existing checks:
 
 ```kotlin
-val onlyRed = fromPredicate(PropertyPath("color"), "must be red") { it == "red" }
+val onlyRed = predicate<String>("must be red") { it == "red" }
 val noRed = onlyRed.isForbidden("red not allowed")
 ```
 
@@ -185,7 +185,7 @@ if (result.isValid) {
 All validations yield `Validated<Unit>` underneath, enabling composition, unit tests, and error aggregation:
 
 ```kotlin
-val rule: Rule<String> = fromPredicate("name", "must not be blank") { it.isNotBlank() }
+val rule: Rule<String> = predicate("must not be blank") { it.isNotBlank() }
 
 assertEquals(Validated.Valid(Unit), rule("valid"))
 assertTrue(rule("") is Validated.Invalid)
@@ -230,7 +230,7 @@ for (error in result.errors) {
 You can associate machine-readable error `code`s with your rules, enabling flexible localization or internationalization strategies.
 
 ```kotlin
-val emailRule = fromPredicate("email", "invalid email", code = "invalid_email") {
+val emailRule = predicate<String>("invalid email", code = "invalid_email") {
     it.contains("@")
 }
 
@@ -270,8 +270,7 @@ data class Registration(
 )
 
 // reusable rule with an error code
-val strongPassword = fromPredicate(
-    "password",
+val strongPassword = predicate<String>(
     "must be at least 8 chars and contain a digit",
     code = "weak_password"
 ) {
