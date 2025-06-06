@@ -187,7 +187,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
  * Example:
  * ```
  * validate(User::ageStr) {
- *     dependent {
+ *     chain {
  *         rule("must be numeric") { it.all(Char::isDigit) }
  *         rule("must be ≥ 18") { it.toInt() >= 18 }
  *     }
@@ -197,7 +197,7 @@ fun <T> FieldValidationScope<List<T>>.validateEach(
  * If no rules are defined, nothing is added.
  */
 @ValidationDsl
-fun <T> FieldValidationScope<T>.dependent(
+fun <T> FieldValidationScope<T>.chain(
     block: RuleChainScope<T>.() -> Unit
 ) {
     val chain = RuleChainScope<T>(this.path).apply(block).build()

@@ -15,7 +15,7 @@ Perfect for validating nested data structures with readable, declarative syntax.
 - Root level & cross-field checks
 - Reusable rules and powerful combinators
 - Nullable field helpers and optional rules
-- Dependent rule chaining (short-circuiting)
+- Rule chaining (short-circuiting)
 - Reuse validators with `use`
 - Group labels & error codes for i18n
 - Functional-style result types
@@ -66,13 +66,13 @@ val orderValidator = validator<Order> {
 
 ---
 
-## 🧠 Dependent Rule Chaining
+## 🧠 Rule Chaining
 
-Use `dependent {}` to short-circuit evaluation. Each rule only runs if the previous one passed:
+Use `chain {}` to short-circuit evaluation. Each rule only runs if the previous one passed:
 
 ```kotlin
 validate(User::age) {
-    dependent {
+    chain {
         rule("must be numeric") { it.all(Char::isDigit) }
         rule("must be ≥ 18") { it.toInt() >= 18 }
     }
@@ -220,7 +220,7 @@ for (error in result.errors) {
 }
 ```
 
-> 🧠 Group labels are **not inherited** by nested `validate`, `validateEach`, `dependent`, or `group` blocks.  
+> 🧠 Group labels are **not inherited** by nested `validate`, `validateEach`, `chain`, or `group` blocks.  
 > Only rules directly inside the block receive the label. This keeps grouping explicit and reusable.
 
 ---

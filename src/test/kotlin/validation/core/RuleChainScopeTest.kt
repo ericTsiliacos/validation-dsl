@@ -2,7 +2,7 @@ package validation.core
 
 import org.testng.Assert.assertNull
 import org.testng.annotations.Test
-import validation.dsl.dependent
+import validation.dsl.chain
 
 class RuleChainScopeTest {
 
@@ -65,7 +65,7 @@ class RuleChainScopeTest {
     @Test
     fun `RuleChainScope chains multiple rules with andThen`() {
         val result = fieldScope(PropertyPath("field"), "ABC") {
-            dependent {
+            chain {
                 rule("must be lowercase") { it == it.lowercase() }
                 rule("must start with a") { it.startsWith("a") }
             }

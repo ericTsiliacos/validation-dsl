@@ -147,7 +147,7 @@ class ValidationDslTest {
     @Test
     fun `whenNotNull inside dependent is skipped if value is null`() {
         val result = fieldScope("field", null as String?) {
-            dependent {
+            chain {
                 this@fieldScope.whenNotNull {
                     rule("must be lowercase") { it == it.lowercase() }
                 }
@@ -187,7 +187,7 @@ class ValidationDslTest {
     fun `dependent inside whenNotNull short-circuits if first rule fails`() {
         val result = fieldScope("field", "ABC" as String?) {
             whenNotNull {
-                dependent {
+                chain {
                     rule("must be numeric") { it.all(Char::isDigit) }
                     rule("must be greater than or equal to 3 digits") { it.length >= 3 }
                 }
@@ -202,10 +202,10 @@ class ValidationDslTest {
     @Test
     fun `nested dependent blocks short-circuit inner but not outer`() {
         val result = fieldScope("value", "abc") {
-            dependent {
+            chain {
                 rule("must be lowercase") { it == it.lowercase() }
 
-                this@fieldScope.dependent {
+                this@fieldScope.chain {
                     rule("must be numeric") { it.all(Char::isDigit) }
                     rule("must be 3 chars") { it.length == 3 }
                 }
@@ -344,7 +344,7 @@ class ValidationDslTest {
     @Test
     fun `dependent rules short-circuit on first failure`() {
         val result = fieldScope("age", "abc") {
-            dependent {
+            chain {
                 rule("must be numeric") { it.all(Char::isDigit) }
                 rule("must be greater than or equal to 18") { it.toInt() >= 18 }
             }
@@ -358,7 +358,7 @@ class ValidationDslTest {
     @Test
     fun `dependent rules continue if first passes`() {
         val result = fieldScope("age", "15") {
-            dependent {
+            chain {
                 rule("must be numeric") { it.all(Char::isDigit) }
                 rule("must be greater than or equal to 18") { it.toInt() >= 18 }
             }
@@ -372,7 +372,7 @@ class ValidationDslTest {
     @Test
     fun `dependent block with one rule works`() {
         val result = fieldScope("username", "") {
-            dependent {
+            chain {
                 rule("must not be blank") { it.isNotBlank() }
             }
         }
@@ -385,7 +385,7 @@ class ValidationDslTest {
     @Test
     fun `dependent block with zero rules does nothing`() {
         val result = fieldScope("noop", "ok") {
-            dependent {}
+            chain {}
         }
 
         result.assertValid()
