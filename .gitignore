@@ -46,7 +46,6 @@ bin/
 **/build/
 **/out/
 gradle-app.setting
-!gradle/wrapper/gradle-wrapper.jar
 
 # Gradle logs
 *.log
