@@ -1,8 +1,8 @@
-package validation.core
+package validation.dsl
 
 import org.testng.Assert.assertNull
 import org.testng.annotations.Test
-import validation.dsl.chain
+import validation.core.*
 
 class RuleChainScopeTest {
 

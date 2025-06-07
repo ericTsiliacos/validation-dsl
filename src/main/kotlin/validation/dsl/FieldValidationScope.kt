@@ -13,11 +13,6 @@ class FieldValidationScope<R>(
 
     val value: R get() = root()
 
-    fun rule(message: String, predicate: (R) -> Boolean) {
-        val rule = fromPredicate(path = path, message = message, predicate = predicate)
-        rules += rule
-    }
-
     fun <E> validate(
         prop: KProperty1<R, E>,
         block: FieldValidationScope<E>.() -> Unit

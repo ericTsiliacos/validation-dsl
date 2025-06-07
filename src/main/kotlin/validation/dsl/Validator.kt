@@ -33,7 +33,7 @@ class Validator<T> {
             combineResults(
                 *list.mapIndexed { index, item ->
                     val path = PropertyPath(prop.name).index(index)
-                    FieldValidationScope(path, { item }).apply(block).evaluate()
+                    FieldValidationScope(path) { item }.apply(block).evaluate()
                 }.toTypedArray()
             ).toUnit()
         }

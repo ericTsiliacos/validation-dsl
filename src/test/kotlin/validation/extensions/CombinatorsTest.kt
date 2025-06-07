@@ -3,43 +3,37 @@ package validation.extensions
 import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 import validation.core.*
+import validation.dsl.predicate
 
 class CombinatorsTest {
 
-    private val isRed: Rule<String> =
-        fromPredicate(PropertyPath("color"), "must be red") { it == "red" }
+    private val isRed: Rule<String> = predicate("must be red") { it == "red" }
 
-    private val lengthOver3 = fromPredicate<String>(
-        PropertyPath("input"),
-        message = "must be longer than 3"
-    ) { it.length > 3 }
+    private val lengthOver3 = predicate<String>("must be longer than 3") { it.length > 3 }
 
-    private val startsWithA = fromPredicate<String>(
-        PropertyPath("input"),
-        message = "must start with A"
-    ) { it.startsWith("A") }
+    private val startsWithA = predicate<String>("must start with A") { it.startsWith("A") }
 
     @Test
     fun `andThen short-circuits if first rule fails`() {
-        val rule1 = fromPredicate<String>(PropertyPath("x"), "must not be empty") { it.isNotEmpty() }
-        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
+        val rule1 = predicate<String>("must not be empty") { it.isNotEmpty() }
+        val rule2 = predicate<String>("must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
         combined("").assertInvalid { errors ->
-            errors[0].assertMatches("x", "must not be empty")
+            errors[0].assertMatches(PropertyPath.EMPTY, "must not be empty")
         }
     }
 
     @Test
     fun `andThen runs second rule only if first passes`() {
-        val rule1 = fromPredicate<String>(PropertyPath("x"), "must not be empty") { it.isNotEmpty() }
-        val rule2 = fromPredicate<String>(PropertyPath("x"), "must be lowercase") { it == it.lowercase() }
+        val rule1 = predicate<String>("must not be empty") { it.isNotEmpty() }
+        val rule2 = predicate<String>("must be lowercase") { it == it.lowercase() }
 
         val combined = rule1 andThen rule2
 
         combined("Hello").assertInvalid { errors ->
-            errors[0].assertMatches("x", "must be lowercase")
+            errors[0].assertMatches(PropertyPath.EMPTY, "must be lowercase")
         }
     }
 
@@ -106,7 +100,7 @@ class CombinatorsTest {
         assertFalse(result.isValid())
         val errors = (result as Validated.Invalid).errors
         assertEquals("must be red", errors.first().message)
-        assertEquals(PropertyPath("color"), errors.first().path)
+        assertEquals(PropertyPath.EMPTY, errors.first().path)
     }
 
     @Test

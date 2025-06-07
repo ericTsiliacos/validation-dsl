@@ -21,9 +21,7 @@ class FieldValidationScopeTest {
 
     @Test
     fun `rule accepts Rule and validates correctly`() {
-        val notBlank = fromPredicate<String>(
-            PropertyPath("username"), "must not be blank"
-        ) { it.isNotBlank() }
+        val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
 
         val result = fieldScope(PropertyPath("username"), "") {
             rule(notBlank)
