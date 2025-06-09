@@ -34,11 +34,14 @@ fun <T> Validated<T>.toUnit(): Validated<Unit> = when (this) {
     is Validated.Invalid -> this
 }
 
-fun <T> combineResults(vararg results: Validated<T>): Validated<List<T>> {
-    val errors = results.filterIsInstance<Validated.Invalid>().flatMap { it.errors }
-    return if (errors.isEmpty()) {
-        Validated.Valid(results.filterIsInstance<Validated.Valid<T>>().map { it.value })
-    } else {
-        Validated.Invalid(errors)
+fun <T> combineResultsFromList(results: List<Validated<T>>): Validated<List<T>> {
+    val errors = mutableListOf<ValidationError>()
+    val values = mutableListOf<T>()
+    for (res in results) {
+        when (res) {
+            is Validated.Valid -> values += res.value
+            is Validated.Invalid -> errors += res.errors
+        }
     }
+    return if (errors.isEmpty()) Validated.Valid(values) else Validated.Invalid(errors)
 }

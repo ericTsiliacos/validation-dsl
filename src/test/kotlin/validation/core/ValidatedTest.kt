@@ -77,10 +77,12 @@ class ValidatedTest {
 
     @Test
     fun `combineResults returns all valid values if no errors`() {
-        val result = combineResults(
-            Validated.Valid("a"),
-            Validated.Valid("b"),
-            Validated.Valid("c")
+        val result = combineResultsFromList(
+            listOf(
+                Validated.Valid("a"),
+                Validated.Valid("b"),
+                Validated.Valid("c")
+            )
         )
 
         result.assertValid()
@@ -92,10 +94,12 @@ class ValidatedTest {
         val e1 = ValidationError(PropertyPath("one"), "bad 1")
         val e2 = ValidationError(PropertyPath("two"), "bad 2")
 
-        val result = combineResults(
-            Validated.Valid("good"),
-            Validated.Invalid(listOf(e1)),
-            Validated.Invalid(listOf(e2))
+        val result = combineResultsFromList(
+            listOf(
+                Validated.Valid("good"),
+                Validated.Invalid(listOf(e1)),
+                Validated.Invalid(listOf(e2))
+            )
         )
 
         result.assertInvalid { errors -> assertEquals(listOf(e1, e2), errors) }
@@ -103,7 +107,7 @@ class ValidatedTest {
 
     @Test
     fun `combineResults returns empty list when no inputs`() {
-        val result = combineResults<String>()
+        val result = combineResultsFromList<String>(emptyList())
         result.assertValid()
         assertEquals(emptyList<String>(), (result as Validated.Valid).value)
     }

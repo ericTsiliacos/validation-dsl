@@ -30,12 +30,11 @@ class Validator<T> {
     ) {
         validations += { target ->
             val list = prop.get(target)
-            combineResults(
-                *list.mapIndexed { index, item ->
-                    val path = PropertyPath(prop.name).index(index)
-                    FieldValidationScope(path) { item }.apply(block).evaluate()
-                }.toTypedArray()
-            ).toUnit()
+            val results = list.mapIndexed { index, item ->
+                val path = PropertyPath(prop.name).index(index)
+                FieldValidationScope(path) { item }.apply(block).evaluate()
+            }
+            combineResultsFromList(results).toUnit()
         }
     }
 

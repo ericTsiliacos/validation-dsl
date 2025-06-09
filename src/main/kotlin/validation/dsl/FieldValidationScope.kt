@@ -35,7 +35,7 @@ class FieldValidationScope<R>(
                 val itemPath = listPath.index(index)
                 FieldValidationScope(itemPath) { item }.apply(block).evaluate()
             }
-            combineResults(*results.toTypedArray()).toUnit()
+            combineResultsFromList(results).toUnit()
         }
     }
 
@@ -46,7 +46,7 @@ class FieldValidationScope<R>(
         val nestedResults = nested.map { it() }
 
         val allResults = ruleResults + nestedResults
-        return combineResults(*allResults.toTypedArray()).toUnit()
+        return combineResultsFromList(allResults).toUnit()
     }
 
 }
