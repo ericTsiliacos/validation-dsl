@@ -1,8 +1,6 @@
 # ✨ validation-dsl
 
-[![Build](https://github.com/ericTsiliacos/validation-dsl/actions/workflows/ci.yml/badge.svg)](https://github.com/ericTsiliacos/validation-dsl/actions)  
-[![codecov](https://codecov.io/gh/ericTsiliacos/validation-dsl/branch/main/graph/badge.svg)](https://codecov.io/gh/ericTsiliacos/validation-dsl)  
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Build](https://github.com/ericTsiliacos/validation-dsl/actions/workflows/ci.yml/badge.svg)](https://github.com/ericTsiliacos/validation-dsl/actions) [![codecov](https://codecov.io/gh/ericTsiliacos/validation-dsl/branch/main/graph/badge.svg)](https://codecov.io/gh/ericTsiliacos/validation-dsl) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A lightweight, expressive, and composable validation DSL for Kotlin.  
 Perfect for validating nested data structures with readable, declarative syntax.
