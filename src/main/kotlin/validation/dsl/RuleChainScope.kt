@@ -1,10 +1,6 @@
 package validation.dsl
 
-import validation.core.PropertyPath
-import validation.core.Rule
-import validation.core.Validated
-import validation.core.ValidationError
-import validation.extensions.andThen
+import validation.core.*
 
 @ValidationDsl
 class RuleChainScope<T>(private val path: PropertyPath) {
@@ -24,5 +20,9 @@ class RuleChainScope<T>(private val path: PropertyPath) {
     }
 
     fun build(): Rule<T>? = currentRule
+
+    private infix fun <T> Rule<T>.andThen(next: Rule<T>): Rule<T> = { value ->
+        this(value).flatMap { next(value) }
+    }
 
 }
