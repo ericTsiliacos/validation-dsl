@@ -3,11 +3,11 @@ package validation.extensions
 import org.testng.AssertJUnit.*
 import org.testng.annotations.Test
 import validation.core.*
-import validation.dsl.predicate
+import validation.dsl.rule
 
 class CombinatorsTest {
 
-    private val isRed: Rule<String> = predicate("must be red") { it == "red" }
+    private val isRed: Rule<String> = rule("must be red") { it == "red" }
 
     @Test
     fun `original rule should pass when value is red`() {

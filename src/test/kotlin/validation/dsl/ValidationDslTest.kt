@@ -16,15 +16,15 @@ class ValidationDslTest {
     }
 
     @Test
-    fun `predicate returns Valid when condition passes`() {
-        val isPositive = predicate<Int>("must be positive") { it > 0 }
+    fun `rule returns Valid when condition passes`() {
+        val isPositive = rule<Int>("must be positive") { it > 0 }
         val result = isPositive(5)
         assertTrue(result is Validated.Valid)
     }
 
     @Test
-    fun `predicate returns Invalid when condition fails`() {
-        val isPositive = predicate<Int>("must be positive") { it > 0 }
+    fun `rule returns Invalid when condition fails`() {
+        val isPositive = rule<Int>("must be positive") { it > 0 }
         val result = isPositive(-1)
         assertTrue(result is Validated.Invalid)
         result as Validated.Invalid
@@ -33,7 +33,7 @@ class ValidationDslTest {
 
     @Test
     fun `rule injects path into predicate error`() {
-        val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
+        val notBlank = rule<String>("must not be blank") { it.isNotBlank() }
         val result = fieldScope("username", "") {
             rule(notBlank)
         }

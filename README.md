@@ -1,7 +1,7 @@
 # ✨ validation-dsl
 
-[![Build](https://github.com/ericTsiliacos/validation-dsl/actions/workflows/ci.yml/badge.svg)](https://github.com/ericTsiliacos/validation-dsl/actions)
-[![codecov](https://codecov.io/gh/ericTsiliacos/validation-dsl/branch/main/graph/badge.svg)](https://codecov.io/gh/ericTsiliacos/validation-dsl)
+[![Build](https://github.com/ericTsiliacos/validation-dsl/actions/workflows/ci.yml/badge.svg)](https://github.com/ericTsiliacos/validation-dsl/actions)  
+[![codecov](https://codecov.io/gh/ericTsiliacos/validation-dsl/branch/main/graph/badge.svg)](https://codecov.io/gh/ericTsiliacos/validation-dsl)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A lightweight, expressive, and composable validation DSL for Kotlin.  
@@ -11,15 +11,14 @@ Perfect for validating nested data structures with readable, declarative syntax.
 
 ## 🌟 Features
 
-- Intuitive DSL for nested and list validation
-- Root level & cross-field checks
-- Reusable rules and powerful combinators
-- Nullable field helpers and optional rules
-- Rule chaining (short-circuiting)
-- Reuse validators with `use`
-- Group labels & error codes for i18n
+- Intuitive DSL for nested object and list validation
+- Reusable atomic rules with contextual path injection
+- Short-circuiting rule chains via `chain { }`
+- Nullable-aware validation with `whenNotNull`
+- Reuse validators with `use(...)`
+- Error grouping and code tags for UI/i18n
 - Functional-style result types
-- Zero dependencies and fully testable
+- No reflection-based magic — everything is testable and explicit
 
 ---
 
@@ -66,9 +65,39 @@ val orderValidator = validator<Order> {
 
 ---
 
+## 🧱 Reusable Rules
+
+```kotlin
+val notBlank = rule<String>("must not be blank") { it.isNotBlank() }
+
+validate(User::username) {
+    rule(notBlank)
+}
+```
+
+---
+
+## 🔁 Reusing Validators
+
+```kotlin
+val tagValidator = validator<Tag> {
+    validate(Tag::value) {
+        rule("must be ≥ 0") { it >= 0 }
+    }
+}
+
+val userValidator = validator<User> {
+    validateEach(User::tags) {
+        use(tagValidator)
+    }
+}
+```
+
+---
+
 ## 🧠 Rule Chaining
 
-Use `chain {}` to short-circuit evaluation. Each rule only runs if the previous one passed:
+Use `chain { }` to short-circuit dependent validations:
 
 ```kotlin
 validate(User::age) {
@@ -81,7 +110,7 @@ validate(User::age) {
 
 ---
 
-## 📊 Validating Lists
+## 📊 List Validation
 
 ```kotlin
 validateEach(User::emails) {
@@ -91,193 +120,95 @@ validateEach(User::emails) {
 
 ---
 
-## ❓ Nullable Field Validation
+## ❓ Nullable Fields
 
 ```kotlin
 validate(User::nickname) {
     whenNotNull {
-        rule("must be at least 3 chars") { it.length >= 3 }
-    }
-}
-```
-
-You can also run a rule **only when the value is present** using `ruleIfPresent`:
-
-```kotlin
-validate(User::nickname) {
-    ruleIfPresent("must be at least 3 chars") { it.length >= 3 }
-}
-```
-
----
-
-## 🛠️ Custom Reusable Rules
-
-```kotlin
-val notBlank = predicate<String>("must not be blank") { it.isNotBlank() }
-
-validate(User::username) {
-    rule(notBlank)
-}
-```
-
----
-
-## ♻️ Reusing Validators
-
-Delegate validation of nested objects to standalone validators:
-
-```kotlin
-val tagValidator = validator<Tag> {
-    validate(Tag::value) { rule("must not be blank") { it.isNotBlank() } }
-}
-
-val userValidator = validator<User> {
-    validateEach(User::tags) { use(tagValidator) }
-}
-```
-
----
-
-## 🎯 Composing Rules
-
-Use `and` for parallel evaluation, or `andThen` for dependent chaining:
-
-```kotlin
-val numeric = predicate<String>("must be numeric") { it.all(Char::isDigit) }
-val over18 = predicate<String>("must be ≥ 18") { it.toInt() >= 18 }
-
-val ageRule = numeric andThen over18
-
-validate(User::age) {
-    rule(ageRule)
-}
-```
-
-Other helpers include `isForbidden` to invert a rule and `fromFunction` to adapt
-existing checks:
-
-```kotlin
-val onlyRed = predicate<String>("must be red") { it == "red" }
-val noRed = onlyRed.isForbidden("red not allowed")
-```
-
----
-
-## ✅ ValidationResult API
-
-```kotlin
-val result: ValidationResult = validator.validate(user)
-
-if (result.isValid) {
-    println("All good!")
-} else {
-    result.errors.forEach {
-        println("${it.path}: ${it.message}")
-    }
-}
-```
-
----
-
-## 🧪 Test Utilities
-
-All validations yield `Validated<Unit>` underneath, enabling composition, unit tests, and error aggregation:
-
-```kotlin
-val rule: Rule<String> = predicate("must not be blank") { it.isNotBlank() }
-
-assertEquals(Validated.Valid(Unit), rule("valid"))
-assertTrue(rule("") is Validated.Invalid)
-```
-
----
-
-## 🧹 Grouping Related Rules
-
-Use `group("label") { ... }` to logically organize related validation rules and attach a `group` label to any errors produced inside that block.
-
-This helps you:
-- Structure validation output by logical sections (e.g., "identity", "address checks")
-- Improve traceability and UI presentation
-- Group related error messages together for the user
-
-```kotlin
-validate(User::name) {
-    group("name rules") {
-        rule("must not be blank") { it.isNotBlank() }
         rule("must be at least 3 characters") { it.length >= 3 }
     }
 }
 ```
 
-Any validation error produced inside the group will include the group label:
+Also supported:
 
 ```kotlin
-val result = validator.validate(User(name = "", tags = emptyList()))
-for (error in result.errors) {
-    println("[${error.group}] ${error.path}: ${error.message}")
-}
+ruleIfPresent("must be at least 3 characters") { it.length >= 3 }
 ```
-
-> 🧠 Group labels are **not inherited** by nested `validate`, `validateEach`, `chain`, or `group` blocks.  
-> Only rules directly inside the block receive the label. This keeps grouping explicit and reusable.
 
 ---
 
-## 🌍 Internationalization Support
-
-You can associate machine-readable error `code`s with your rules, enabling flexible localization or internationalization strategies.
+## 🚫 Inverting Rules with `isForbidden`
 
 ```kotlin
-val emailRule = predicate<String>("invalid email", code = "invalid_email") {
+val mustBeRed = rule<String>("must be red") { it == "red" }
+val mustNotBeRed = mustBeRed.isForbidden("red not allowed")
+
+validate(Item::color) {
+    rule(mustNotBeRed)
+}
+```
+
+---
+
+## 🧪 Testability
+
+Every rule returns a `Validated<Unit>`, making it easy to test in isolation:
+
+```kotlin
+val nonEmpty = rule<String>("must not be blank") { it.isNotBlank() }
+
+assertEquals(Validated.Valid(Unit), nonEmpty("hello"))
+assertTrue(nonEmpty("") is Validated.Invalid)
+```
+
+---
+
+## 🧹 Grouping and Error Codes
+
+Attach a group label for better UI/debugging, and an error code for i18n:
+
+```kotlin
+validate(User::name) {
+    group("basic") {
+        rule("must not be blank", code = "required") { it.isNotBlank() }
+        rule("min 3 chars", code = "too_short") { it.length >= 3 }
+    }
+}
+```
+
+Each error will include the group and code:
+
+```text
+[group=basic] name: must not be blank (code=required)
+```
+
+---
+
+## 🌍 i18n Support via Codes
+
+Rules can have machine-readable codes:
+
+```kotlin
+val emailRule = rule<String>("invalid email", code = "invalid_email") {
     it.contains("@")
 }
-
-validate(User::email) {
-    rule(emailRule)
-}
 ```
-
-The resulting `ValidationError` contains a `code` field:
-
-```kotlin
-ValidationError(
-    path = "email",
-    message = "invalid email",
-    code = "invalid_email"
-)
-```
-
-You can use this to:
-- Map error codes to localized messages
-- Track and test for specific rule failures
-- Cleanly separate user-facing messages from logic
 
 ---
 
-## 🏗️ Mini Tutorial
-
-The following example shows how to build a small validation module for a registration form. It demonstrates custom reusable rules, grouping for i18n, and composing validators.
+## 🏗️ Full Example
 
 ```kotlin
-data class Address(val street: String, val city: String, val zip: String)
-data class Registration(
-    val username: String,
-    val email: String,
-    val password: String,
-    val address: Address
-)
+data class Address(val street: String, val zip: String)
+data class Registration(val username: String, val password: String, val address: Address)
 
-// reusable rule with an error code
-val strongPassword = predicate<String>(
-    "must be at least 8 chars and contain a digit",
-    code = "weak_password"
+val strongPassword = rule<String>(
+    "must be at least 8 chars and contain a digit", code = "weak_password"
 ) {
     it.length >= 8 && it.any(Char::isDigit)
 }
 
-// group all address checks under the "address" label
 val addressValidator = validator<Address> {
     group("address") {
         validate(Address::street) { rule("required") { it.isNotBlank() } }
@@ -287,38 +218,19 @@ val addressValidator = validator<Address> {
     }
 }
 
-// compose the registration validator
 val registrationValidator = validator<Registration> {
-    validate(Registration::username) { rule("must not be blank") { it.isNotBlank() } }
+    validate(Registration::username) { rule("required") { it.isNotBlank() } }
     validate(Registration::password) { rule(strongPassword) }
     validate(Registration::address) { use(addressValidator) }
 }
-
-val result = registrationValidator.validate(
-    Registration("js", "john@example.com", "pass", Address("", "", "ABCD"))
-)
-
-for (error in result.errors) {
-    println("[${error.group}] ${error.path}: ${error.message} (${error.code})")
-}
 ```
-
-This prints something like:
-
-```
-[address] street: required (null)
-[address] zip: invalid zip (invalid_zip)
-password: must be at least 8 chars and contain a digit (weak_password)
-```
-
-The snippet illustrates how to define custom rules with codes, group related validations, and compose validators for nested structures.
 
 ---
 
 ## 📦 Publishing
 
-This library is lightweight and designed for easy reuse.  
-You can include it in your own projects or publish it to Maven Central / JitPack.
+This library has no dependencies and is suitable for use in any Kotlin project.  
+You can publish it via Maven Central, JitPack, or include it locally.
 
 ---
 

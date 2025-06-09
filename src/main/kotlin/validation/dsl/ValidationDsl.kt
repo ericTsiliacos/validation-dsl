@@ -84,16 +84,6 @@ fun <T : Any> FieldValidationScope<T?>.ruleIfPresent(
 }
 
 /**
- * DSL entry point for defining reusable, path-agnostic rules.
- */
-fun <T> predicate(
-    message: String,
-    code: String? = null,
-    group: String? = null,
-    check: (T) -> Boolean
-): Rule<T> = rule(message, code, group, check)
-
-/**
  * Injects current path into reusable predicate.
  */
 @ValidationDsl
@@ -120,8 +110,8 @@ fun <T> FieldValidationScope<T>.rule(
     group: String? = null,
     check: (T) -> Boolean
 ) {
-    val predicate = predicate(message, code, group, check)
-    rule(predicate)
+    val reusableRule = validation.dsl.rule(message, code, group, check)
+    this.rule(reusableRule)
 }
 
 /**
